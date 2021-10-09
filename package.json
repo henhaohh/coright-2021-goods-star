@@ -1,0 +1,11 @@
+{
+  "name": "coright-2021-goods_star",
+  "version": "1.0.0",
+  "description": "产品星级表",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "henhao",
+  "license": "ISC"
+}
