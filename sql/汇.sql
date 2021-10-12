@@ -11,7 +11,7 @@
 */
 select 
 ${if(len(para_viewtype)==0,"1","")}
-${if(para_viewtype==0,"distinct pluno,pluname,item_total_cnt,total_cnt,item_total_per,cat_name","")}
+${if(para_viewtype==0,"distinct pluno,pluname,item_total_cnt,total_cnt,cat_name"+if(len(para_shop)==0,",item_total_per item_per",",item_shop_per item_per"),"")}
 ${if(para_viewtype==1,"viewno,1-sum(item_per_dif) dif_score","")}
 from (
 select 
@@ -64,6 +64,7 @@ from (
 left join (select shop,count(cnt) cnt from (SELECT a.shop,case when a.type='1' or a.type='2' or a.type='4' then 0 else 1 end cnt FROM "POS"."TD_SALE" a LEFT JOIN "POS"."TD_SALE_DETAIL" b on a.companyno=b.companyno and a.shop=b.shop and a.saleno=b.saleno ${if(len(para_iscoupon)==0,"","left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")} where a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and (b.packagemaster!='Y' or b.packagemaster is null) ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")} )group by shop) b on a.viewno = b.shop
 -- 单品总单数
 left join (select pluno,pluname,count(cnt) cnt from (SELECT b.pluno,c.pluname, case when a.type='1' or a.type='2' or a.type='4' then 0 else 1 end cnt FROM "POS"."TD_SALE" a LEFT JOIN "POS"."TD_SALE_DETAIL" b on a.companyno=b.companyno and a.shop=b.shop and a.saleno=b.saleno left join tb_goods c on b.pluno=c.pluno ${if(len(para_iscoupon)==0,"","left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")} where a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and (b.packagemaster!='Y' or b.packagemaster is null) ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")} )group by pluno,pluname) c on a.pluno = c.pluno
+where c.cnt is not null
 group by
     a.pluno
     ,a.viewno
@@ -80,5 +81,5 @@ ${if(para_iscake==0,"and cat_name != '裱花组'","")}
 ${if(para_iscake==1,"and cat_name = '裱花组'","")}
 ${if(len(para_pluno)==0,""," and pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
 ${if(len(para_shop)==0,""," and viewno in ('"+ REPLACE(para_shop,",","','") +"')")}
-${if(para_viewtype==0,"ORDER BY item_total_per DESC","")}
+${if(para_viewtype==0,if(len(para_shop)==0,"ORDER BY item_total_per DESC","ORDER BY item_shop_per DESC"),"")}
 ${if(para_viewtype==1,"group by viewno ORDER BY dif_score DESC","")}
