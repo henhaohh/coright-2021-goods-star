@@ -89,17 +89,34 @@
 <ColumnPrivilegeControl/>
 <RowPrivilegeControl/>
 <RowHeight defaultValue="723900">
-<![CDATA[1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,723900,1008000,1008000,1008000,1008000,1008000,1008000,723900,1008000,762000,723900]]></RowHeight>
+<![CDATA[1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,1008000,762000,723900]]></RowHeight>
 <ColumnWidth defaultValue="2743200">
-<![CDATA[3390900,2743200,2743200,2743200,2743200,2743200,2743200,2743200,2743200,2743200,2743200]]></ColumnWidth>
+<![CDATA[1066800,3390900,2743200,2743200,2743200,2743200,2743200,2743200,2743200,2743200,2743200]]></ColumnWidth>
 <CellElementList>
-<C c="0" r="0" cs="2" s="0">
-<O>
-<![CDATA[产品星级算法]]></O>
+<C c="0" r="0" rs="10">
 <PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
+</Highlight>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性2]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[$para_viewtype = 1]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.RowHeightHighlightAction"/>
+</Highlight>
+</HighlightList>
 <Expand/>
 </C>
-<C c="2" r="0" s="1">
+<C c="1" r="0" cs="2" s="0">
+<O>
+<![CDATA[产品星级算法]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -115,47 +132,39 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="1" cs="6" s="1">
+<C c="6" r="0" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="1" r="1" cs="6" s="1">
 <O>
 <![CDATA[1.先根据购买率由高到低排行,算法:购买率 = 产品单数 ➗ 总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="2" cs="6" s="1">
+<C c="1" r="2" cs="6" s="1">
 <O>
 <![CDATA[2.根据名次算星级,算法:星级得分 = 排名 ➗ 总商品数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="3" s="2">
+<C c="1" r="3" cs="6" s="2">
+<O>
+<![CDATA[注:公司总单数仅包含所选类别已售门店]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="1" r="4" s="3">
 <O>
 <![CDATA[说明:]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="1" r="3" s="1">
+<C c="2" r="4" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="2" r="3" s="1">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="3" r="3" s="1">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="4" r="3" s="1">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="5" r="3" s="1">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="0" r="4" cs="4" s="1">
-<O>
-<![CDATA[星级分为10等,每等半颗星,满星5颗]]></O>
+<C c="3" r="4" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -167,17 +176,13 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="5" cs="3" s="1">
+<C c="6" r="4" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="1" r="5" cs="4" s="1">
 <O>
-<![CDATA[半星:0 < 星级得分 < 0.1]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="3" r="5" s="1">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="4" r="5" s="1">
+<![CDATA[星级分为10等,每等半颗星,满星5颗]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -185,13 +190,13 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="6" cs="3" s="1">
-<O>
-<![CDATA[一星:0.1 <= 星级得分 < 0.2]]></O>
+<C c="6" r="5" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="6" s="1">
+<C c="1" r="6" cs="3" s="1">
+<O>
+<![CDATA[半星:0 < 星级得分 < 0.1]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -203,13 +208,13 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="7" cs="3" s="1">
-<O>
-<![CDATA[···]]></O>
+<C c="6" r="6" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="7" s="1">
+<C c="1" r="7" cs="3" s="1">
+<O>
+<![CDATA[一星:0.1 <= 星级得分 < 0.2]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -221,13 +226,13 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="8" cs="3" s="1">
-<O>
-<![CDATA[五星:0.9 <= 星级得分]]></O>
+<C c="6" r="7" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="8" s="1">
+<C c="1" r="8" cs="3" s="1">
+<O>
+<![CDATA[···]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -239,123 +244,166 @@
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="11" cs="2" s="0">
+<C c="6" r="8" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="1" r="9" cs="3" s="1">
+<O>
+<![CDATA[五星:0.9 <= 星级得分]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="4" r="9" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="5" r="9" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="6" r="9" s="1">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="0" r="10" rs="16">
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[$para_viewtype = 0]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.RowHeightHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="1" r="10" cs="2" s="0">
 <O>
 <![CDATA[门店得分算法]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="12" cs="6" s="1">
+<C c="1" r="11" cs="6" s="1">
 <O>
 <![CDATA[1.算出全公司产品的购买率,算法:购买率 = 总产品单数 ➗ 总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="13" cs="6" s="1">
+<C c="1" r="12" cs="6" s="1">
 <O>
 <![CDATA[2.算出门店商品购买率,算法 = 门店商品单数 ➗ 门店总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="14" cs="6" s="1">
+<C c="1" r="13" cs="6" s="1">
 <O>
 <![CDATA[3.根据每个商品算出对应的差异,差异 = 门店购买率 - 总购买率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="15" cs="6" s="1">
+<C c="1" r="14" cs="6" s="1">
 <O>
 <![CDATA[4.算出分数,算法 = (1 - ∑差异)×100]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="17" s="1">
+<C c="1" r="15" cs="6" s="2">
+<O>
+<![CDATA[注:公司总单数仅包含所选类别已售门店]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="1" r="16" s="1">
 <O>
 <![CDATA[公式:]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="1" r="17" cs="5" s="1">
+<C c="2" r="16" cs="5" s="1">
 <O>
 <![CDATA[S = (1 - ∑(p - P)) × 100 ]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="18" s="1">
+<C c="1" r="17" s="1">
 <O>
 <![CDATA[其中:]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="1" r="18" cs="5">
+<C c="2" r="17" cs="5">
 <O>
 <![CDATA[p = q / a ; P = Q / A]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="19" s="2">
+<C c="1" r="18" s="3">
 <O>
 <![CDATA[说明：]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="1" r="19" s="1">
+<C c="2" r="18" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="2" r="19" s="1">
+<C c="3" r="18" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="19" s="1">
+<C c="4" r="18" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="4" r="19" s="1">
+<C c="5" r="18" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="5" r="19" s="1">
+<C c="6" r="18" s="1">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="20" cs="3" s="1">
+<C c="1" r="19" cs="3" s="1">
 <O>
 <![CDATA[q:门店商品单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="21" cs="3" s="1">
+<C c="1" r="20" cs="3" s="1">
 <O>
 <![CDATA[a:门店总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="22" cs="3" s="1">
+<C c="1" r="21" cs="3" s="1">
 <O>
 <![CDATA[Q:公司商品单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="23" cs="3" s="1">
+<C c="1" r="22" cs="3" s="1">
 <O>
 <![CDATA[A:公司总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="24" cs="3" s="1">
+<C c="1" r="23" cs="3" s="1">
 <O>
 <![CDATA[p:门店购买率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="25" cs="3" s="1">
+<C c="1" r="24" cs="3" s="1">
 <O>
 <![CDATA[P:公司购买率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="26" cs="3" s="1">
+<C c="1" r="25" cs="3" s="1">
 <O>
 <![CDATA[S:得分]]></O>
 <PrivilegeControl/>
@@ -377,6 +425,11 @@
 </Style>
 <Style imageLayout="1">
 <FRFont name="微软雅黑" style="0" size="88"/>
+<Background name="NullBackground"/>
+<Border/>
+</Style>
+<Style imageLayout="1">
+<FRFont name="SimSun" style="0" size="80" foreground="-6737152"/>
 <Background name="NullBackground"/>
 <Border/>
 </Style>
@@ -755,6 +808,6 @@
 <TemplateCloudInfoAttrMark createTime="1633750641173"/>
 </TemplateCloudInfoAttrMark>
 <TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="77b9d344-5a78-4e73-b8d8-2d1bad07f8e1"/>
+<TemplateIdAttMark TemplateId="4617136f-e2a1-4273-a4e3-725e2a30fbc9"/>
 </TemplateIdAttMark>
 </Form>
