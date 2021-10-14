@@ -10,5 +10,7 @@ where
     b.companyno='${para_companyno}'
     and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
     ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
+    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
+    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
 group by 
     b.companyno,a.shop

@@ -23,6 +23,11 @@
 <O>
 <![CDATA[]]></O>
 </Parameter>
+<Parameter>
+<Attributes name="para_cType"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
 </Parameters>
 <Attributes maxMemRowCount="-1"/>
 <Connection class="com.fr.data.impl.NameDatabaseConnection">
@@ -42,6 +47,8 @@ where
     b.companyno='${para_companyno}'
     and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
     ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
+    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
+    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
 group by 
     b.companyno,a.shop]]></Query>
 <PageQuery>
@@ -98,7 +105,7 @@ b.companyno
 ,a.shop
 --,count(distinct a.saleno) cnt 
 ,b.saleno
-,(CASE WHEN c.sno='010101' or c.sno='010102' then '现烤组' WHEN c.sno='010103' then '现烤三明治' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
+,(CASE WHEN c.sno='010101' or c.sno='010102' or c.sno='010103' then '现烤组' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
 from td_sale_detail b 
 inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno 
 ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
@@ -111,7 +118,8 @@ group by b.companyno,b.pluno,a.shop,b.saleno,c.sno
 )
 where 1 = 1
 ${if(len(para_pluno)==0,""," and pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
-${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
+${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
+--${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
 group by companyno,pluno,shop]]></Query>
 <PageQuery>
 <![CDATA[]]></PageQuery>
@@ -201,7 +209,7 @@ b.companyno
 ,a.shop
 --,count(distinct a.saleno) cnt 
 ,b.saleno
-,(CASE WHEN c.sno='010101' or c.sno='010102' then '现烤组' WHEN c.sno='010103' then '现烤三明治' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
+,(CASE WHEN c.sno='010101' or c.sno='010102' or c.sno='010103' then '现烤组' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
 from td_sale_detail b 
 inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno 
 ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
@@ -214,7 +222,8 @@ group by b.companyno,b.pluno,a.shop,b.saleno,c.sno
 )
 where 1 = 1
 ${if(len(para_pluno)==0,""," and pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
-${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
+${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
+--${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
 ${if(len(para_shop)==0," and shop in (SELECT Shop FROM Platform_Staffs_Shop where opno='"+para_opno+"')"," and shop in ('" + REPLACE(para_shop,",","','") + "')")}
 group by companyno,pluno,shop]]></Query>
 <PageQuery>
@@ -528,9 +537,12 @@ group by
 </TableDataDictAttr>
 </Dictionary>
 </Present>
-<Expand dir="0"/>
+<Expand dir="0" order="2">
+<SortFormula>
+<![CDATA[=j3]]></SortFormula>
+</Expand>
 </C>
-<C c="2" r="2" s="5">
+<C c="2" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="门店商品销售" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
@@ -545,7 +557,7 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="3" r="2" s="5">
+<C c="3" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="门店总单数" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition">
@@ -581,7 +593,7 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="4" r="2" s="5">
+<C c="4" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="单品总单数" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition">
@@ -617,7 +629,7 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="5" r="2" s="5">
+<C c="5" r="2" s="6">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=LET(A, 单数分门店和品号.select(SHOP, PLUNO = B3), sum(门店总单数.select(CNT, INARRAY(SHOP, A) > 0)))]]></Attributes>
@@ -625,7 +637,7 @@ group by
 <PrivilegeControl/>
 <Expand leftParentDefault="false" left="B3"/>
 </C>
-<C c="6" r="2" s="6">
+<C c="6" r="2" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=C3 / D3]]></Attributes>
@@ -637,7 +649,7 @@ group by
 </Present>
 <Expand/>
 </C>
-<C c="7" r="2" s="6">
+<C c="7" r="2" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=E3 / F3]]></Attributes>
@@ -649,7 +661,7 @@ group by
 </Present>
 <Expand/>
 </C>
-<C c="8" r="2" s="6">
+<C c="8" r="2" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=G3 - H3]]></Attributes>
@@ -657,10 +669,10 @@ group by
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="9" r="2" s="7">
+<C c="9" r="2" s="8">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=1-I3]]></Attributes>
+<![CDATA[=I3]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Present class="com.fr.base.present.FormulaPresent">
@@ -669,7 +681,7 @@ group by
 </Present>
 <Expand/>
 </C>
-<C c="0" r="3" s="8">
+<C c="0" r="3" s="9">
 <O>
 <![CDATA[统计]]></O>
 <PrivilegeControl/>
@@ -677,31 +689,11 @@ group by
 <CellPageAttr/>
 <Expand leftParentDefault="false"/>
 </C>
-<C c="1" r="3" s="9">
+<C c="1" r="3" s="10">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="2" r="3" cs="4" s="9">
-<PrivilegeControl/>
-<HighlightList>
-<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
-<Name>
-<![CDATA[条件属性1]]></Name>
-<Condition class="com.fr.data.condition.ListCondition"/>
-<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
-</Highlight>
-</HighlightList>
-<Expand/>
-</C>
-<C c="6" r="3" s="9">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="7" r="3" s="9">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="8" r="3" s="9">
+<C c="2" r="3" cs="4" s="10">
 <PrivilegeControl/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
@@ -713,10 +705,30 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="9" r="3" s="10">
+<C c="6" r="3" s="10">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="7" r="3" s="10">
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="8" r="3" s="10">
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="9" r="3" s="11">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=(1 - sum(I3)) * 100]]></Attributes>
+<![CDATA[=(COUNT(I3{I3>=0}) / COUNT(I3)) * 100]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Expand/>
@@ -731,12 +743,12 @@ group by
 </FormElementCase>
 <StyleList>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="微软雅黑" style="1" size="72"/>
+<FRFont name="微软雅黑" style="1" size="80"/>
 <Background name="NullBackground"/>
 <Border/>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="微软雅黑" style="0" size="72" foreground="-1"/>
+<FRFont name="微软雅黑" style="0" size="80" foreground="-1"/>
 <Background name="ColorBackground" color="-13395610"/>
 <Border>
 <Bottom style="1" color="-1"/>
@@ -744,16 +756,7 @@ group by
 </Border>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="微软雅黑" style="0" size="72" foreground="-1"/>
-<Background name="ColorBackground" color="-13395610"/>
-<Border>
-<Bottom style="1" color="-1"/>
-<Left style="1" color="-1"/>
-<Right style="1" color="-1"/>
-</Border>
-</Style>
-<Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72" foreground="-1"/>
+<FRFont name="微软雅黑" style="0" size="80" foreground="-1"/>
 <Background name="ColorBackground" color="-13395610"/>
 <Border>
 <Bottom style="1" color="-1"/>
@@ -762,7 +765,16 @@ group by
 </Border>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="微软雅黑" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80" foreground="-1"/>
+<Background name="ColorBackground" color="-13395610"/>
+<Border>
+<Bottom style="1" color="-1"/>
+<Left style="1" color="-1"/>
+<Right style="1" color="-1"/>
+</Border>
+</Style>
+<Style horizontal_alignment="0" imageLayout="1">
+<FRFont name="微软雅黑" style="0" size="80"/>
 <Background name="NullBackground"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -770,8 +782,18 @@ group by
 <Right style="1" color="-1"/>
 </Border>
 </Style>
+<Style horizontal_alignment="2" imageLayout="1">
+<FRFont name="SimSun" style="0" size="80"/>
+<Background name="NullBackground"/>
+<Border>
+<Top style="1" color="-1"/>
+<Bottom style="1" color="-1"/>
+<Left style="1" color="-1"/>
+<Right style="1" color="-1"/>
+</Border>
+</Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80"/>
 <Background name="NullBackground"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -783,7 +805,7 @@ group by
 <Style horizontal_alignment="0" imageLayout="1">
 <Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
 <![CDATA[#0]]></Format>
-<FRFont name="SimSun" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80"/>
 <Background name="NullBackground"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -795,7 +817,7 @@ group by
 <Style horizontal_alignment="0" imageLayout="1">
 <Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
 <![CDATA[#0.00]]></Format>
-<FRFont name="SimSun" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80"/>
 <Background name="NullBackground"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -804,7 +826,7 @@ group by
 </Border>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80"/>
 <Background name="ColorBackground" color="-13312"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -812,7 +834,7 @@ group by
 </Border>
 </Style>
 <Style imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="80"/>
 <Background name="ColorBackground" color="-13312"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -823,7 +845,7 @@ group by
 <Style horizontal_alignment="0" imageLayout="1">
 <Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
 <![CDATA[#0.00]]></Format>
-<FRFont name="微软雅黑" style="0" size="72"/>
+<FRFont name="微软雅黑" style="0" size="80"/>
 <Background name="ColorBackground" color="-13312"/>
 <Border>
 <Top style="1" color="-1"/>
@@ -1780,6 +1802,6 @@ t[OoEt:NWtqW9'NV?HqoPu?UZ/5&[ANq/Nr/>?rG(!,EHr;:$#Z'gQQN<?4]AhE;5q9VIafYT
 <TemplateCloudInfoAttrMark createTime="1633746075224"/>
 </TemplateCloudInfoAttrMark>
 <TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="efe53444-cba4-4626-a068-e99351733182"/>
+<TemplateIdAttMark TemplateId="a9fb6680-72ad-4473-9f12-65b4c67771f7"/>
 </TemplateIdAttMark>
 </Form>
