@@ -287,6 +287,107 @@ group by
 <PageQuery>
 <![CDATA[]]></PageQuery>
 </TableData>
+<TableData name="门店结构产品数量" class="com.fr.data.impl.DBTableData">
+<Parameters>
+<Parameter>
+<Attributes name="para_companyno"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_cType"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+</Parameters>
+<Attributes maxMemRowCount="-1"/>
+<Connection class="com.fr.data.impl.NameDatabaseConnection">
+<DatabaseName>
+<![CDATA[NRC_DCPS]]></DatabaseName>
+</Connection>
+<Query>
+<![CDATA[select
+	viewno
+	,count(distinct pluno) cnt
+from
+(
+	select 
+		a.organizationno viewno
+		,a.pluno
+		,b.sno
+		,(CASE WHEN b.sno='010101' or b.sno='010102' or b.sno='010103' then '现烤组' WHEN b.sno='010201' or b.sno='010301' or b.sno='010401' then '工厂' WHEN substr(b.sno,1,4)='0105' then '西点组' WHEN substr(b.sno,1,4)='0109' then '水吧组' WHEN b.sno='010402' or b.sno='010701' or substr(b.sno,0,4)='0106' or substr(b.sno,0,4)='0308' then '代销品' WHEN substr(b.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name 
+	from 
+		tb_goods_shop a
+	left join tb_goods b on a.pluno = b.pluno
+	where 
+		a.COMPANYNO='${para_companyno}'
+		and a.cnfflg='Y'
+		and a.supplier = 'KRD'
+		and a.organizationno not in ('A110')
+		--排除掉某些特定商品
+		and a.pluno not in ('010102092')
+		and substr(b.sno,1,2) = '01'
+)
+where 1 = 1
+${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
+group by
+	viewno]]></Query>
+<PageQuery>
+<![CDATA[]]></PageQuery>
+</TableData>
+<TableData name="门店总单数2" class="com.fr.data.impl.DBTableData">
+<Parameters>
+<Parameter>
+<Attributes name="para_iscoupon"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_cdate"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_companyno"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_bdate"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_cType"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+</Parameters>
+<Attributes maxMemRowCount="-1"/>
+<Connection class="com.fr.data.impl.NameDatabaseConnection">
+<DatabaseName>
+<![CDATA[NRC_DCPS]]></DatabaseName>
+</Connection>
+<Query>
+<![CDATA[select 
+    b.companyno
+    ,a.shop shop
+    ,count(distinct a.saleno) cnt  
+from 
+    td_sale_detail b 
+inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
+${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
+where
+    b.companyno='${para_companyno}'
+    and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
+    ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
+    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
+    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
+group by 
+    b.companyno,a.shop]]></Query>
+<PageQuery>
+<![CDATA[]]></PageQuery>
+</TableData>
 </TableDataMap>
 <FormMobileAttr>
 <FormMobileAttr refresh="false" isUseHTML="false" isMobileOnly="false" isAdaptivePropertyAutoMatch="false" appearRefresh="false" promptWhenLeaveWithoutSubmit="false" allowDoubleClickOrZoom="true"/>
@@ -377,11 +478,34 @@ group by
 <ColumnPrivilegeControl/>
 <RowPrivilegeControl/>
 <RowHeight defaultValue="723900">
-<![CDATA[1296000,1296000,1296000,1440000,723900,723900,723900,723900,723900,723900,723900]]></RowHeight>
+<![CDATA[1296000,1296000,1296000,1440000,0,1296000,1296000,1296000,723900,723900,723900]]></RowHeight>
 <ColumnWidth defaultValue="2743200">
-<![CDATA[2016000,4032000,2705100,2743200,2743200,2743200,2304000,2514600,2743200,3024000,2743200]]></ColumnWidth>
+<![CDATA[2743200,2016000,4032000,2705100,2743200,2743200,2743200,2304000,2514600,2743200,3024000,2743200]]></ColumnWidth>
 <CellElementList>
-<C c="0" r="0" cs="10" s="0">
+<C c="0" r="0" rs="4">
+<O>
+<![CDATA[门店明细]]></O>
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
+</Highlight>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性2]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[$para_viewtype = 0 || len($para_viewtype) = 0]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.RowHeightHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="1" r="0" cs="10" s="0">
 <O t="DSColumn">
 <Attributes dsName="门店商品销售" columnName="SHOP"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
@@ -403,66 +527,66 @@ group by
 </TableDataDictAttr>
 </Dictionary>
 </Present>
-<Expand dir="1" order="2">
+<Expand order="2">
 <SortFormula>
-<![CDATA[=J3]]></SortFormula>
+<![CDATA[K3]]></SortFormula>
 </Expand>
 </C>
-<C c="0" r="1" s="1">
+<C c="1" r="1" s="1">
 <O>
 <![CDATA[序号]]></O>
 <PrivilegeControl/>
 <Expand leftParentDefault="false"/>
 </C>
-<C c="1" r="1" s="2">
+<C c="2" r="1" s="2">
 <O>
 <![CDATA[品名]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="2" r="1" s="3">
+<C c="3" r="1" s="3">
 <O>
 <![CDATA[商品_门店_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="1" s="3">
+<C c="4" r="1" s="3">
 <O>
 <![CDATA[门店_总_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="4" r="1" s="3">
+<C c="5" r="1" s="3">
 <O>
 <![CDATA[商品_总_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="5" r="1" s="3">
+<C c="6" r="1" s="3">
 <O>
 <![CDATA[全体_总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="6" r="1" s="3">
+<C c="7" r="1" s="3">
 <O>
 <![CDATA[万购率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="7" r="1" s="3">
+<C c="8" r="1" s="3">
 <O>
 <![CDATA[参考万购率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="8" r="1" s="3">
+<C c="9" r="1" s="3">
 <O>
 <![CDATA[差异]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="9" r="1" s="3">
+<C c="10" r="1" s="3">
 <O>
 <![CDATA[得分因子❓]]></O>
 <PrivilegeControl/>
@@ -477,7 +601,7 @@ group by
 </NameJavaScriptGroup>
 <Expand/>
 </C>
-<C c="0" r="2" s="4">
+<C c="1" r="2" s="4">
 <O t="I">
 <![CDATA[1]]></O>
 <PrivilegeControl/>
@@ -501,7 +625,7 @@ group by
 <![CDATA[条件属性2]]></Name>
 <Condition class="com.fr.data.condition.FormulaCondition">
 <Formula>
-<![CDATA[&B3 <= 5]]></Formula>
+<![CDATA[&C3 <= 5]]></Formula>
 </Condition>
 <HighlightAction class="com.fr.report.cell.cellattr.highlight.ForegroundHighlightAction">
 <Scope val="1"/>
@@ -511,11 +635,11 @@ group by
 </HighlightList>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=&B3]]></Content>
+<![CDATA[=&C3]]></Content>
 </Present>
-<Expand leftParentDefault="false" left="B3"/>
+<Expand leftParentDefault="false" left="C3"/>
 </C>
-<C c="1" r="2" s="5">
+<C c="2" r="2" s="5">
 <O t="DSColumn">
 <Attributes dsName="门店商品销售" columnName="PLUNO"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
@@ -539,10 +663,10 @@ group by
 </Present>
 <Expand dir="0" order="2">
 <SortFormula>
-<![CDATA[=j3]]></SortFormula>
+<![CDATA[K3]]></SortFormula>
 </Expand>
 </C>
-<C c="2" r="2" s="6">
+<C c="3" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="门店商品销售" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
@@ -557,7 +681,7 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="3" r="2" s="6">
+<C c="4" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="门店总单数" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition">
@@ -593,7 +717,7 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="4" r="2" s="6">
+<C c="5" r="2" s="6">
 <O t="DSColumn">
 <Attributes dsName="单品总单数" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition">
@@ -629,59 +753,59 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="5" r="2" s="6">
+<C c="6" r="2" s="6">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=LET(A, 单数分门店和品号.select(SHOP, PLUNO = B3), sum(门店总单数.select(CNT, INARRAY(SHOP, A) > 0)))]]></Attributes>
+<![CDATA[=LET(A, 单数分门店和品号.select(SHOP, PLUNO = C3), sum(门店总单数.select(CNT, INARRAY(SHOP, A) > 0)))]]></Attributes>
 </O>
 <PrivilegeControl/>
-<Expand leftParentDefault="false" left="B3"/>
-</C>
-<C c="6" r="2" s="7">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=C3 / D3]]></Attributes>
-</O>
-<PrivilegeControl/>
-<Present class="com.fr.base.present.FormulaPresent">
-<Content>
-<![CDATA[=$$$*10000]]></Content>
-</Present>
-<Expand/>
+<Expand leftParentDefault="false" left="C3"/>
 </C>
 <C c="7" r="2" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=E3 / F3]]></Attributes>
+<![CDATA[=D3 / E3]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=$$$*10000]]></Content>
+<![CDATA[=$$$ * 10000]]></Content>
 </Present>
 <Expand/>
 </C>
 <C c="8" r="2" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=G3 - H3]]></Attributes>
-</O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="9" r="2" s="8">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=I3]]></Attributes>
+<![CDATA[=F3 / G3]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=$$$*100]]></Content>
+<![CDATA[=$$$ * 10000]]></Content>
 </Present>
 <Expand/>
 </C>
-<C c="0" r="3" s="9">
+<C c="9" r="2" s="7">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=H3 - I3]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="10" r="2" s="8">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=J3]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.FormulaPresent">
+<Content>
+<![CDATA[=$$$ * 100]]></Content>
+</Present>
+<Expand/>
+</C>
+<C c="1" r="3" s="9">
 <O>
 <![CDATA[统计]]></O>
 <PrivilegeControl/>
@@ -689,11 +813,11 @@ group by
 <CellPageAttr/>
 <Expand leftParentDefault="false"/>
 </C>
-<C c="1" r="3" s="10">
+<C c="2" r="3" s="10">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="2" r="3" cs="4" s="10">
+<C c="3" r="3" cs="4" s="10">
 <PrivilegeControl/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
@@ -703,10 +827,6 @@ group by
 <HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
 </Highlight>
 </HighlightList>
-<Expand/>
-</C>
-<C c="6" r="3" s="10">
-<PrivilegeControl/>
 <Expand/>
 </C>
 <C c="7" r="3" s="10">
@@ -715,6 +835,10 @@ group by
 </C>
 <C c="8" r="3" s="10">
 <PrivilegeControl/>
+<Expand/>
+</C>
+<C c="9" r="3" s="10">
+<PrivilegeControl/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
 <Name>
@@ -725,12 +849,367 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="9" r="3" s="11">
+<C c="10" r="3" s="11">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=(COUNT(I3{I3>=0}) / COUNT(I3)) * 100]]></Attributes>
+<![CDATA[=((COUNT(J3{J3 >= 0}) / COUNT(J3)) * 100) * 门店结构产品数量.select(CNT, VIEWNO = B1) / max(门店结构产品数量.select(CNT))]]></Attributes>
 </O>
 <PrivilegeControl/>
+<Expand/>
+</C>
+<C c="0" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="1" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="2" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="3" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="4" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="5" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="6" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="7" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="8" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="9" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="10" r="4">
+<PrivilegeControl/>
+<Expand leftParentDefault="false" upParentDefault="false"/>
+</C>
+<C c="0" r="5" rs="3">
+<O>
+<![CDATA[商品明细]]></O>
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[$para_viewtype = 1]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.RowHeightHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="1" r="5" cs="10" s="0">
+<O t="DSColumn">
+<Attributes dsName="门店商品销售" columnName="PLUNO"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Parameters/>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.DictPresent">
+<Dictionary class="com.fr.data.impl.TableDataDictionary">
+<FormulaDictAttr kiName="PLUNO" viName="PLUNAME"/>
+<TableDataDictAttr>
+<TableData class="com.fr.data.impl.NameTableData">
+<Name>
+<![CDATA[商品]]></Name>
+</TableData>
+</TableDataDictAttr>
+</Dictionary>
+</Present>
+<Expand/>
+</C>
+<C c="1" r="6" s="1">
+<O>
+<![CDATA[序号]]></O>
+<PrivilegeControl/>
+<Expand leftParentDefault="false"/>
+</C>
+<C c="2" r="6" s="2">
+<O>
+<![CDATA[门店]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="3" r="6" s="3">
+<O>
+<![CDATA[商品_门店_单数]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="4" r="6" s="3">
+<O>
+<![CDATA[门店_总_单数]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="5" r="6" s="3">
+<O>
+<![CDATA[商品_总_单数]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="6" r="6" s="3">
+<O>
+<![CDATA[全体_总单数]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="7" r="6" s="3">
+<O>
+<![CDATA[万购率]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="8" r="6" s="3">
+<O>
+<![CDATA[参考万购率]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="9" r="6" s="3">
+<O>
+<![CDATA[差异]]></O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="10" r="6" s="3">
+<O>
+<![CDATA[差异❓]]></O>
+<PrivilegeControl/>
+<NameJavaScriptGroup>
+<NameJavaScript name="JavaScript脚本1">
+<JavaScript class="com.fr.js.JavaScriptImpl">
+<Parameters/>
+<Content>
+<![CDATA[FR.Msg.alert("","根据购买率和参照值算得")]]></Content>
+</JavaScript>
+</NameJavaScript>
+</NameJavaScriptGroup>
+<Expand/>
+</C>
+<C c="1" r="7" s="4">
+<O t="I">
+<![CDATA[1]]></O>
+<PrivilegeControl/>
+<CellGUIAttr showAsHTML="true"/>
+<CellPageAttr/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[row() % 2 = 0]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.BackgroundHighlightAction">
+<Scope val="1"/>
+<Background name="ColorBackground" color="-589834"/>
+</HighlightAction>
+</Highlight>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性2]]></Name>
+<Condition class="com.fr.data.condition.FormulaCondition">
+<Formula>
+<![CDATA[&C8 <= 5]]></Formula>
+</Condition>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ForegroundHighlightAction">
+<Scope val="1"/>
+<Foreground color="-8388608"/>
+</HighlightAction>
+</Highlight>
+</HighlightList>
+<Present class="com.fr.base.present.FormulaPresent">
+<Content>
+<![CDATA[=&C8]]></Content>
+</Present>
+<Expand leftParentDefault="false" left="C8"/>
+</C>
+<C c="2" r="7" s="6">
+<O t="DSColumn">
+<Attributes dsName="门店商品销售" columnName="SHOP"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.DictPresent">
+<Dictionary class="com.fr.data.impl.TableDataDictionary">
+<FormulaDictAttr kiName="VIEWNO" viName="VIEWNAME"/>
+<TableDataDictAttr>
+<TableData class="com.fr.data.impl.NameTableData">
+<Name>
+<![CDATA[门店分区]]></Name>
+</TableData>
+</TableDataDictAttr>
+</Dictionary>
+</Present>
+<Expand dir="0" order="2">
+<SortFormula>
+<![CDATA[=J8]]></SortFormula>
+</Expand>
+</C>
+<C c="3" r="7" s="6">
+<O t="DSColumn">
+<Attributes dsName="门店商品销售" columnName="CNT"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper">
+<Attr divideMode="2"/>
+</RG>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
+</O>
+<PrivilegeControl/>
+<Expand dir="0"/>
+</C>
+<C c="4" r="7" s="6">
+<O t="DSColumn">
+<Attributes dsName="门店总单数" columnName="CNT"/>
+<Condition class="com.fr.data.condition.ListCondition">
+<JoinCondition join="0">
+<Condition class="com.fr.data.condition.CommonCondition">
+<CNUMBER>
+<![CDATA[0]]></CNUMBER>
+<CNAME>
+<![CDATA[COMPANYNO]]></CNAME>
+<Compare op="0">
+<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
+</Compare>
+</Condition>
+</JoinCondition>
+<JoinCondition join="0">
+<Condition class="com.fr.data.condition.CommonCondition">
+<CNUMBER>
+<![CDATA[0]]></CNUMBER>
+<CNAME>
+<![CDATA[SHOP]]></CNAME>
+<Compare op="0">
+<ColumnRow column="2" row="7"/>
+</Compare>
+</Condition>
+</JoinCondition>
+</Condition>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
+</O>
+<PrivilegeControl/>
+<Expand dir="0"/>
+</C>
+<C c="5" r="7" s="6">
+<O t="DSColumn">
+<Attributes dsName="单品总单数" columnName="CNT"/>
+<Condition class="com.fr.data.condition.ListCondition">
+<JoinCondition join="0">
+<Condition class="com.fr.data.condition.CommonCondition">
+<CNUMBER>
+<![CDATA[0]]></CNUMBER>
+<CNAME>
+<![CDATA[COMPANYNO]]></CNAME>
+<Compare op="0">
+<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
+</Compare>
+</Condition>
+</JoinCondition>
+<JoinCondition join="0">
+<Condition class="com.fr.data.condition.CommonCondition">
+<CNUMBER>
+<![CDATA[0]]></CNUMBER>
+<CNAME>
+<![CDATA[PLUNO]]></CNAME>
+<Compare op="0">
+<ColumnRow column="1" row="5"/>
+</Compare>
+</Condition>
+</JoinCondition>
+</Condition>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
+</O>
+<PrivilegeControl/>
+<Expand dir="0"/>
+</C>
+<C c="6" r="7" s="6">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=LET(A, 单数分门店和品号.select(SHOP, PLUNO = B6), sum(门店总单数2.select(CNT, INARRAY(SHOP, A) > 0)))]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="7" r="7" s="7">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=D8 / E8]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.FormulaPresent">
+<Content>
+<![CDATA[=$$$ * 10000]]></Content>
+</Present>
+<Expand/>
+</C>
+<C c="8" r="7" s="7">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=F8 / G8]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.FormulaPresent">
+<Content>
+<![CDATA[=$$$ * 10000]]></Content>
+</Present>
+<Expand/>
+</C>
+<C c="9" r="7" s="6">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=H8 - I8]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Expand/>
+</C>
+<C c="10" r="7" s="12">
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=J8]]></Attributes>
+</O>
+<PrivilegeControl/>
+<Present class="com.fr.base.present.FormulaPresent">
+<Content>
+<![CDATA[=$$$*10000]]></Content>
+</Present>
 <Expand/>
 </C>
 </CellElementList>
@@ -849,6 +1328,17 @@ group by
 <Background name="ColorBackground" color="-13312"/>
 <Border>
 <Top style="1" color="-1"/>
+<Left style="1" color="-1"/>
+</Border>
+</Style>
+<Style horizontal_alignment="0" imageLayout="1">
+<Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
+<![CDATA[#0]]></Format>
+<FRFont name="SimSun" style="0" size="80"/>
+<Background name="NullBackground"/>
+<Border>
+<Top style="1" color="-1"/>
+<Bottom style="1" color="-1"/>
 <Left style="1" color="-1"/>
 </Border>
 </Style>
@@ -1802,6 +2292,6 @@ t[OoEt:NWtqW9'NV?HqoPu?UZ/5&[ANq/Nr/>?rG(!,EHr;:$#Z'gQQN<?4]AhE;5q9VIafYT
 <TemplateCloudInfoAttrMark createTime="1633746075224"/>
 </TemplateCloudInfoAttrMark>
 <TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="a9fb6680-72ad-4473-9f12-65b4c67771f7"/>
+<TemplateIdAttMark TemplateId="1a9f40f5-8ffb-418b-9015-396954652210"/>
 </TemplateIdAttMark>
 </Form>
