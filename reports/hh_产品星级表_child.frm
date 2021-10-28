@@ -42,13 +42,15 @@
 from 
     td_sale_detail b 
 inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
+left join tb_goods c on b.companyno=c.companyno and b.pluno=c.pluno
 ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
 where
     b.companyno='${para_companyno}'
     and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
     ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
-    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
-    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
+    ${if(para_cType='裱花组',"and substr(c.sno,0,4)='0108'","and substr(c.sno,0,4)!='0108'")}
+    and substr(c.sno,1,6)!='B10601' 
+    and substr(c.sno,1,6)!='011002'
 group by 
     b.companyno,a.shop]]></Query>
 <PageQuery>
@@ -376,13 +378,15 @@ group by
 from 
     td_sale_detail b 
 inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
+left join tb_goods c on b.companyno=c.companyno and b.pluno=c.pluno
 ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
 where
     b.companyno='${para_companyno}'
     and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
     ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
-    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
-    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
+    ${if(para_cType='裱花组',"and substr(c.sno,0,4)='0108'","and substr(c.sno,0,4)!='0108'")}
+    and substr(c.sno,1,6)!='B10601' 
+    and substr(c.sno,1,6)!='011002'
 group by 
     b.companyno,a.shop]]></Query>
 <PageQuery>
@@ -1046,7 +1050,7 @@ group by
 </Present>
 <Expand leftParentDefault="false" left="C8"/>
 </C>
-<C c="2" r="7" s="6">
+<C c="2" r="7" s="5">
 <O t="DSColumn">
 <Attributes dsName="门店商品销售" columnName="SHOP"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
@@ -2292,6 +2296,6 @@ t[OoEt:NWtqW9'NV?HqoPu?UZ/5&[ANq/Nr/>?rG(!,EHr;:$#Z'gQQN<?4]AhE;5q9VIafYT
 <TemplateCloudInfoAttrMark createTime="1633746075224"/>
 </TemplateCloudInfoAttrMark>
 <TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="1a9f40f5-8ffb-418b-9015-396954652210"/>
+<TemplateIdAttMark TemplateId="d23886bd-67fe-4aa7-b0ff-ce9e39f33119"/>
 </TemplateIdAttMark>
 </Form>

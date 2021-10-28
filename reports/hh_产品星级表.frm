@@ -78,13 +78,15 @@ ORDER BY VIEWNO]]></Query>
 from 
     td_sale_detail b 
 inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
+left join tb_goods c on b.companyno=c.companyno and b.pluno=c.pluno
 ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
 where
     b.companyno='${para_companyno}'
     and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
     ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
-    ${if(para_cType='裱花组',"and substr(b.pluno,0,4)='0108'","and substr(b.pluno,0,4)!='0108'")}
-    and substr(b.pluno,1,6)!='B10601' and substr(b.pluno,1,6)!='011002'
+    ${if(para_cType='裱花组',"and substr(c.sno,0,4)='0108'","and substr(c.sno,0,4)!='0108'")}
+    and substr(c.sno,1,6)!='B10601' 
+    and substr(c.sno,1,6)!='011002'
 group by 
     b.companyno,a.shop]]></Query>
 <PageQuery>
@@ -360,7 +362,7 @@ group by
 <Parameters/>
 <Layout class="com.fr.form.ui.container.WBorderLayout">
 <WidgetName name="form"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="form" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -380,7 +382,7 @@ group by
 <NorthAttr size="36"/>
 <North class="com.fr.form.ui.container.WParameterLayout">
 <WidgetName name="para"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -396,12 +398,13 @@ group by
 <Alpha alpha="1.0"/>
 </Border>
 <Background name="ColorBackground"/>
+<FileAttrErrorMarker class="com.fr.base.io.FileAttrErrorMarker" pluginID="com.fr.plugin.mobile.top.query.pane" oriClass="com.fr.plugin.mobile.top.query.pane.MobileTopParamStyle"/>
 <LCAttr vgap="0" hgap="0" compInterval="0"/>
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.ComboBox">
 <WidgetName name="para_cType"/>
 <WidgetID widgetID="8667c77e-c270-4583-9206-262344ca040f"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="comboBox0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -428,7 +431,7 @@ group by
 <InnerWidget class="com.fr.form.ui.ComboBox">
 <WidgetName name="para_iscoupon"/>
 <WidgetID widgetID="fd8c737e-b137-42a5-9cb6-cff882006d43"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="comboBox0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -456,7 +459,7 @@ group by
 <WidgetName name="formSubmit0"/>
 <LabelName name="结束时间"/>
 <WidgetID widgetID="fb4c2f7f-27ce-4482-a924-cb5b65e9325d"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="formSubmit0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -471,7 +474,7 @@ group by
 <InnerWidget class="com.fr.form.ui.Label">
 <WidgetName name="label1"/>
 <WidgetID widgetID="ffc77033-ffef-41ea-a255-7beab0503f04"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="label1" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -489,7 +492,7 @@ group by
 <InnerWidget class="com.fr.form.ui.Label">
 <WidgetName name="label0"/>
 <WidgetID widgetID="737b6544-5ba4-46f2-9269-1b199c2e205a"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="label0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -508,7 +511,7 @@ group by
 <WidgetName name="para_cdate"/>
 <LabelName name="结束时间"/>
 <WidgetID widgetID="a962ff92-ecf8-4e5f-8470-2b376957980f"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="dateEditor1" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -531,7 +534,7 @@ group by
 <WidgetName name="para_bdate"/>
 <LabelName name="起始时间"/>
 <WidgetID widgetID="029f5605-32ef-4e55-ba97-e54f8380cf1d"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="dateEditor0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -576,13 +579,11 @@ group by
 <NameTag name="para_bdate" tag="起始时间"/>
 </WidgetNameTagMap>
 <ParamAttr class="com.fr.report.mobile.DefaultMobileParamStyle"/>
-<ParamStyle class="com.fr.plugin.mobile.top.query.pane.style.MobileTopParamStyle" pluginID="com.fr.plugin.mobile.top.query.pane" plugin-version="10.4.976">
-<Attr autoCommit="true"/>
-</ParamStyle>
+<ParamStyle class="com.fr.form.ui.mobile.impl.DefaultMobileParameterStyle"/>
 </North>
 <Center class="com.fr.form.ui.container.WFitLayout">
 <WidgetName name="body"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -601,7 +602,7 @@ group by
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.container.WTitleLayout">
 <WidgetName name="report_STAR"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="report1" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -621,7 +622,7 @@ group by
 <InnerWidget class="com.fr.form.ui.ElementCaseEditor">
 <WidgetName name="report_STAR"/>
 <WidgetID widgetID="01205e46-f63c-4e2f-a895-563bc612e6a4"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -1012,7 +1013,7 @@ group by
 <![CDATA[_dialog]]></TargetFrame>
 <Features width="360" height="640"/>
 <ReportletName extendParameters="true" showPI="true">
-<![CDATA[/ERP/定制报表/2021/hh_产品星级表_child.frm]]></ReportletName>
+<![CDATA[/NRC/Reports/产品分析/hh_产品星级表_child.frm]]></ReportletName>
 <Attr>
 <DialogAttr class="com.fr.js.ReportletHyperlinkDialogAttr">
 <O>
@@ -1040,7 +1041,7 @@ group by
 <PopupTarget>
 <![CDATA[template]]></PopupTarget>
 <ReportletName extendParameters="true">
-<![CDATA[/ERP/定制报表/2021/hh_产品星级表_child.frm]]></ReportletName>
+<![CDATA[/NRC/Reports/产品分析/hh_产品星级表_child.frm]]></ReportletName>
 <Style borderType="0" borderColor="-16777216" borderRadius="4.0" bgColor="-1" bgOpacity="1.0" mobileRegularType="auto_height" mobileWidth="95.0" mobileHeight="95.0" padRegularType="auto_height" padWidth="95.0" padHeight="95.0"/>
 </JavaScript>
 </NameJavaScript>
@@ -1517,7 +1518,7 @@ group by
 <![CDATA[_dialog]]></TargetFrame>
 <Features width="360" height="640"/>
 <ReportletName extendParameters="true" showPI="true">
-<![CDATA[/ERP/定制报表/2021/hh_产品星级表_child.frm]]></ReportletName>
+<![CDATA[/NRC/Reports/产品分析/hh_产品星级表_child.frm]]></ReportletName>
 <Attr>
 <DialogAttr class="com.fr.js.ReportletHyperlinkDialogAttr">
 <O>
@@ -1545,7 +1546,7 @@ group by
 <PopupTarget>
 <![CDATA[template]]></PopupTarget>
 <ReportletName extendParameters="true">
-<![CDATA[/ERP/定制报表/2021/hh_产品星级表_child.frm]]></ReportletName>
+<![CDATA[/NRC/Reports/产品分析/hh_产品星级表_child.frm]]></ReportletName>
 <Style borderType="0" borderColor="-16777216" borderRadius="4.0" bgColor="-1" bgOpacity="1.0" mobileRegularType="auto_height" mobileWidth="95.0" mobileHeight="95.0" padRegularType="auto_height" padWidth="95.0" padHeight="95.0"/>
 </JavaScript>
 </NameJavaScript>
@@ -1661,7 +1662,7 @@ group by
 <Right style="5" color="-1"/>
 </Border>
 </Style>
-<Style horizontal_alignment="0" imageLayout="1">
+<Style horizontal_alignment="2" imageLayout="1">
 <FRFont name="SimSun" style="0" size="72" foreground="-16776961" underline="1"/>
 <Background name="NullBackground"/>
 <Border/>
@@ -2213,7 +2214,7 @@ e46P/qfb9c"[>?hf8rc*o!qI]AY0:T^#&Pg<<Y%NffkTlg<1$3(5~
 <body class="com.fr.form.ui.ElementCaseEditor">
 <WidgetName name="report1"/>
 <WidgetID widgetID="01205e46-f63c-4e2f-a895-563bc612e6a4"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -2725,7 +2726,7 @@ KD?3blh<<)?DYQ#[~
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.container.WScaleLayout">
 <WidgetName name="para_shop"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="comboBox0" frozen="false"/>
 <PrivilegeControl/>
 </WidgetAttr>
@@ -2745,7 +2746,7 @@ KD?3blh<<)?DYQ#[~
 <InnerWidget class="com.fr.form.ui.ComboBox">
 <WidgetName name="para_shop"/>
 <WidgetID widgetID="8ea17f14-a0e1-43a8-ae39-8f6a3c84bcc3"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
 <PrivilegeControl/>
 <MobileStyle class="com.fr.form.ui.mobile.DefaultMobileStyle" isCustom="true" borderType="1" borderRadius="6.0" borderColor="-13395610" iconColor="-13395610">
@@ -2778,7 +2779,7 @@ KD?3blh<<)?DYQ#[~
 </Widget>
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.RadioGroup">
-<Listener event="statechange" name="状态改变1">
+<Listener event="statechange">
 <JavaScript class="com.fr.js.JavaScriptImpl">
 <Parameters/>
 <Content>
@@ -2789,7 +2790,7 @@ dom && dom.setVisible(!val);]]></Content>
 </Listener>
 <WidgetName name="para_viewtype"/>
 <WidgetID widgetID="8294ee99-d24b-45da-97d0-6f276745bacb"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="-1.0" description="">
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="radioGroup0" frozen="false"/>
 <PrivilegeControl/>
 <MobileStyle class="com.fr.plugin.mobile.widget.radiogroup.united.UnitedMobileStyle" pluginID="com.fr.plugin.mobile.widget.radiogroup" plugin-version="10.4.986" isCustom="false" borderType="1" borderRadius="2.0" iconColor="-14701083">
@@ -2841,10 +2842,10 @@ dom && dom.setVisible(!val);]]></Content>
 </Layout>
 <DesignerVersion DesignerVersion="KAA"/>
 <PreviewType PreviewType="0"/>
-<TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="f441f4ab-446f-442a-9585-fc17b05fa267"/>
-</TemplateIdAttMark>
 <TemplateCloudInfoAttrMark class="com.fr.plugin.cloud.analytics.attr.TemplateInfoAttrMark" pluginID="com.fr.plugin.cloud.analytics.v10" plugin-version="2.3.0.20210831">
 <TemplateCloudInfoAttrMark createTime="1633678816517"/>
 </TemplateCloudInfoAttrMark>
+<TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
+<TemplateIdAttMark TemplateId="a7345375-9d31-4f6b-b707-46c66e42c9b5"/>
+</TemplateIdAttMark>
 </Form>
