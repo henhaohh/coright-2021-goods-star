@@ -18,6 +18,20 @@ from
 		and a.organizationno not in ('A110')
 		--排除掉某些特定商品
 		and a.pluno not in ('010102092')
+		-- 宜春十运会店不要牛乳小馒头,刘松这里不改,我这里手动弄了下
+		and not (a.pluno in ('010502036') and organizationno = 'A123')
+		-- 萍乡南正街店不要几款产品,刘松这里不改,我这里手动弄了下
+		and not (a.pluno in ('010103004','010103008','010103011','010103010') and organizationno = 'A116')
+		-- 泸州北路店不要的几款产品
+		and not (a.pluno in ('010502036','010502037') and organizationno = 'A112')
+		-- 宜春八小店不要的几款产品
+		and not (a.pluno in ('010501033') and organizationno = 'A124')
+		-- 宜春中学店不要的几款产品
+		and not (a.pluno in ('010502033','010501010','010501033','010502028') and organizationno = 'A122')
+		-- 宜春润达店不要的几款产品
+		and not (a.pluno in ('010201006') and organizationno = 'A108')
+		-- 萍乡金三角店不要的几款产品
+		and not (a.pluno in ('010502037') and organizationno = 'A114')
 		and substr(b.sno,1,2) = '01'
 )
 where 1 = 1
