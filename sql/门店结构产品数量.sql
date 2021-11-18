@@ -31,7 +31,13 @@ from
 		-- 宜春润达店不要的几款产品
 		and not (a.pluno in ('010201006') and organizationno = 'A108')
 		-- 萍乡金三角店不要的几款产品
-		and not (a.pluno in ('010502037') and organizationno = 'A114')
+		and not (a.pluno in ('010102098','010502036','010502037') and organizationno = 'A114')
+		-- 湘东新街店不要的几款产品
+		and not (a.pluno in ('010102062','010102072','010301009','010501006') and organizationno = 'A113')
+		-- 萍乡润达店不要的几款产品
+		and not (a.pluno in ('010502028') and organizationno = 'A105')
+		-- 芦溪漫时区店不要的几款产品
+		and not (a.pluno in ('010102062','010102072','010502036') and organizationno = 'A117')
 		and substr(b.sno,1,2) = '01'
 )
 where 1 = 1
