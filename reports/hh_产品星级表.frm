@@ -15,12 +15,13 @@
 <![CDATA[NRC_DCPS]]></DatabaseName>
 </Connection>
 <Query>
-<![CDATA[select distinct a.shopgroupno,a.shop viewno,C.ORG_NAME viewname,b.shopgroupname 		FROM "POS"."TA_SHOPGROUP" a
+<![CDATA[select distinct a.shopgroupno,a.shop viewno,C.ORG_NAME viewname,b.shopgroupname,case when regexp_like(b.shopgroupname,'事业部$') then 0 when regexp_like(b.shopgroupname,'区$') then 1 when regexp_like(a.shopgroupno,'^[A-z]AL+') and regexp_like(b.shopgroupname,'.类') then 2 else -1 end viewtype
+FROM "POS"."TA_SHOPGROUP" a
 inner join "POS"."TA_SHOPGROUP" z on a.shop = z.shop and a.shopgroupno != z.shopgroupno
 left join ta_ShopGHead b on a.companyno=b.companyno and a.shopgroupno = b.shopgroupno
 LEFT JOIN ta_Org_Lang C ON C.OrganizationNo = a.shop
 where a.companyno = '${para_companyno}'
-and a.shopgroupno not in ('001')
+and b.shopgrouptype=2
 ORDER BY VIEWNO]]></Query>
 <PageQuery>
 <![CDATA[]]></PageQuery>
@@ -34,276 +35,6 @@ ORDER BY VIEWNO]]></Query>
 </Connection>
 <Query>
 <![CDATA[SELECT PLUNO,PLUNAME FROM "POS"."TB_GOODS" WHERE COMPANYNO=66]]></Query>
-<PageQuery>
-<![CDATA[]]></PageQuery>
-</TableData>
-<TableData name="门店总单数" class="com.fr.data.impl.DBTableData">
-<Parameters>
-<Parameter>
-<Attributes name="para_iscoupon"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cdate"/>
-<O>
-<![CDATA[2021-10-12]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_bdate"/>
-<O>
-<![CDATA[2021-10-01]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_companyno"/>
-<O>
-<![CDATA[66]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cType"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-</Parameters>
-<Attributes maxMemRowCount="-1"/>
-<Connection class="com.fr.data.impl.NameDatabaseConnection">
-<DatabaseName>
-<![CDATA[NRC_DCPS]]></DatabaseName>
-</Connection>
-<Query>
-<![CDATA[select 
-    b.companyno
-    ,a.shop shop
-    ,count(distinct a.saleno) cnt  
-from 
-    td_sale_detail b 
-inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
-left join tb_goods c on b.companyno=c.companyno and b.pluno=c.pluno
-${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
-where
-    b.companyno='${para_companyno}'
-    and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
-    ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
-    ${if(para_cType='裱花组',"and substr(c.sno,0,4)='0108'","and substr(c.sno,0,4)!='0108'")}
-    and substr(c.sno,1,6)!='B10601' 
-    and substr(c.sno,1,6)!='011002'
-group by 
-    b.companyno,a.shop]]></Query>
-<PageQuery>
-<![CDATA[]]></PageQuery>
-</TableData>
-<TableData name="单品总单数" class="com.fr.data.impl.DBTableData">
-<Parameters>
-<Parameter>
-<Attributes name="para_iscoupon"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_companyno"/>
-<O>
-<![CDATA[66]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_bdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-</Parameters>
-<Attributes maxMemRowCount="-1"/>
-<Connection class="com.fr.data.impl.NameDatabaseConnection">
-<DatabaseName>
-<![CDATA[NRC_DCPS]]></DatabaseName>
-</Connection>
-<Query>
-<![CDATA[select 
-    b.companyno
-    ,b.pluno
-    ,count(distinct a.saleno) cnt  
-from 
-    td_sale_detail b 
-inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno
-${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
-where
-    b.companyno='${para_companyno}'
-    and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}' and a.type=0
-    ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}${if(para_iscoupon==1," and z.hIsCoupon != 0","")}
-group by 
-    b.companyno,b.pluno]]></Query>
-<PageQuery>
-<![CDATA[]]></PageQuery>
-</TableData>
-<TableData name="门店商品销售" class="com.fr.data.impl.DBTableData">
-<Parameters>
-<Parameter>
-<Attributes name="para_pluno"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_iscoupon"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_companyno"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_bdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cType"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_shop"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_opno"/>
-<O>
-<![CDATA[A08002]]></O>
-</Parameter>
-</Parameters>
-<Attributes maxMemRowCount="-1"/>
-<Connection class="com.fr.data.impl.NameDatabaseConnection">
-<DatabaseName>
-<![CDATA[NRC_DCPS]]></DatabaseName>
-</Connection>
-<Query>
-<![CDATA[/*  产品星级表 
-    参数说明(名称,类型,默认值,说明)
-    para_pluno      @String ''      品号，多个用英文逗号分隔
-    para_iscoupon   @Number ''      是否含券，1:含券，0：不含券
-    para_viewtype   @Number '0'     访问模式，0：星级，1：门店得分
-    para_shop       @String ''      门店号，多个用英文逗号分隔
-    para_companyno  @string '66'    公司编号
-    para_iscake     @Number '0'     是否是生日蛋糕，1：是；0：否
-    para_bdate      @String ''      起始时间，格式yyyy-MM-dd
-    para_cdate      @String ''      结束时间，格式yyyy-MM-dd
-    para_cType      @String '现烤组' 分类，[现烤组|现烤三明治|工厂|西点组|水吧组|代销品|裱花组|其他]A
-*/
-select
-    companyno,pluno,shop,count(distinct saleno) cnt 
-from (
-    select 
-        b.companyno
-        ,b.pluno
-        ,a.shop
-        --,count(distinct a.saleno) cnt 
-        ,b.saleno
-        ,(CASE WHEN c.sno='010101' or c.sno='010102' or c.sno='010103' then '现烤组' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
-    from td_sale_detail b 
-    inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno 
-    ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
-    left join tb_goods c on c.companyno = b.companyno and c.pluno = b.pluno 
-    where b.companyno='${para_companyno}' and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}'
-        and a.type=0 
-        ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}
-        ${if(para_iscoupon==1," and z.hIsCoupon != 0","")} 
-    group by b.companyno,b.pluno,a.shop,b.saleno,c.sno
-)
-where 1 = 1
-    ${if(len(para_pluno)==0,""," and pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
-    ${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
---    ${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
-    ${if(len(para_shop)==0," and shop in (SELECT Shop FROM Platform_Staffs_Shop where opno='"+para_opno+"')"," and shop in ('" + REPLACE(para_shop,",","','") + "')")}
-group by companyno,pluno,shop]]></Query>
-<PageQuery>
-<![CDATA[]]></PageQuery>
-</TableData>
-<TableData name="单数分门店和品号" class="com.fr.data.impl.DBTableData">
-<Parameters>
-<Parameter>
-<Attributes name="para_iscoupon"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_companyno"/>
-<O>
-<![CDATA[66]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_bdate"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_pluno"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-<Parameter>
-<Attributes name="para_cType"/>
-<O>
-<![CDATA[]]></O>
-</Parameter>
-</Parameters>
-<Attributes maxMemRowCount="-1"/>
-<Connection class="com.fr.data.impl.NameDatabaseConnection">
-<DatabaseName>
-<![CDATA[NRC_DCPS]]></DatabaseName>
-</Connection>
-<Query>
-<![CDATA[/*  产品星级表 
-    参数说明(名称,类型,默认值,说明)
-    para_pluno      @String ''      品号，多个用英文逗号分隔
-    para_iscoupon   @Number ''      是否含券，1:含券，0：不含券
-    para_viewtype   @Number '0'     访问模式，0：星级，1：门店得分
-    para_shop       @String ''      门店号，多个用英文逗号分隔
-    para_companyno  @string '66'    公司编号
-    para_iscake     @Number '0'     是否是生日蛋糕，1：是；0：否
-    para_bdate      @String ''      起始时间，格式yyyy-MM-dd
-    para_cdate      @String ''      结束时间，格式yyyy-MM-dd
-    para_cType      @String '现烤组' 分类，[现烤组|现烤三明治|工厂|西点组|水吧组|代销品|裱花组|其他]A
-*/
-select
-    companyno,pluno,shop,count(distinct saleno) cnt 
-from (
-    select 
-        b.companyno
-        ,b.pluno
-        ,a.shop
-        --,count(distinct a.saleno) cnt 
-        ,b.saleno
-        ,(CASE WHEN c.sno='010101' or c.sno='010102' or c.sno='010103' then '现烤组' WHEN c.sno='010201' or c.sno='010301' or c.sno='010401' then '工厂' WHEN substr(c.sno,1,4)='0105' then '西点组' WHEN substr(c.sno,1,4)='0109' then '水吧组' WHEN c.sno='010402' or c.sno='010701' or substr(c.sno,0,4)='0106' or substr(c.sno,0,4)='0308' then '代销品' WHEN substr(c.sno,1,4)='0108' then '裱花组' ELSE '其他' END) cat_name -- 分类
-    from td_sale_detail b 
-    inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno 
-    ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
-    left join tb_goods c on c.companyno = b.companyno and c.pluno = b.pluno 
-    where b.companyno='${para_companyno}' and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}'
-        and a.type=0 
-        ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}
-        ${if(para_iscoupon==1," and z.hIsCoupon != 0","")} 
-    group by b.companyno,b.pluno,a.shop,b.saleno,c.sno
-)
-where 1 = 1
-    ${if(len(para_pluno)==0,""," and pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
-    ${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
---    ${if(len(para_cType)=0,""," and cat_name in ('"+REPLACE(para_cType,",","','")+"')")}
-group by companyno,pluno,shop]]></Query>
 <PageQuery>
 <![CDATA[]]></PageQuery>
 </TableData>
@@ -346,12 +77,263 @@ from
 		and a.organizationno not in ('A110')
 		--排除掉某些特定商品
 		and a.pluno not in ('010102092')
+		/*-- 宜春十运会店不要牛乳小馒头,刘松这里不改,我这里手动弄了下
+		and not (a.pluno in ('010502036') and organizationno = 'A123')
+		-- 萍乡南正街店不要几款产品,刘松这里不改,我这里手动弄了下
+		and not (a.pluno in ('010103004','010103008','010103011','010103010') and organizationno = 'A116')
+		-- 泸州北路店不要的几款产品
+		and not (a.pluno in ('010502036','010502037') and organizationno = 'A112')
+		-- 宜春八小店不要的几款产品
+		and not (a.pluno in ('010501033') and organizationno = 'A124')
+		-- 宜春中学店不要的几款产品
+		and not (a.pluno in ('010502033','010501010','010501033','010502028') and organizationno = 'A122')
+		-- 宜春润达店不要的几款产品
+		and not (a.pluno in ('010201006') and organizationno = 'A108')
+		-- 萍乡金三角店不要的几款产品
+		and not (a.pluno in ('010102098','010502036','010502037') and organizationno = 'A114')
+		-- 湘东新街店不要的几款产品
+		and not (a.pluno in ('010102062','010102072','010301009','010501006') and organizationno = 'A113')
+		-- 萍乡润达店不要的几款产品
+		and not (a.pluno in ('010502028') and organizationno = 'A105')
+		-- 芦溪漫时区店不要的几款产品
+		and not (a.pluno in ('010102062','010102072','010502036') and organizationno = 'A117')*/
 		and substr(b.sno,1,2) = '01'
 )
 where 1 = 1
 ${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
 group by
 	viewno]]></Query>
+<PageQuery>
+<![CDATA[]]></PageQuery>
+</TableData>
+<TableData name="汇" class="com.fr.data.impl.DBTableData">
+<Parameters>
+<Parameter>
+<Attributes name="para_pluno"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_iscoupon"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_cdate"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_companyno"/>
+<O>
+<![CDATA[66]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_bdate"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_cType"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_shop"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_opno"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_viewtype"/>
+<O>
+<![CDATA[]]></O>
+</Parameter>
+</Parameters>
+<Attributes maxMemRowCount="-1"/>
+<Connection class="com.fr.data.impl.NameDatabaseConnection">
+<DatabaseName>
+<![CDATA[NRC_DCPS]]></DatabaseName>
+</Connection>
+<Query>
+<![CDATA[/* sql 分类部分 */
+WITH 销售明细 AS (
+    SELECT
+        *
+    FROM (
+        select 
+            b.pluno
+            ,a.shop
+            ,a.bdate
+            ,b.saleno
+            ,(CASE 
+                WHEN substr(c.sno,1,4)='0101' then '现烤类'
+                WHEN substr(c.sno,1,4)='0102' then '面包类'
+                WHEN substr(c.sno,1,4)='0103' then '蛋糕类'
+                WHEN substr(c.sno,1,4)='0104' then '饼干类'
+                WHEN substr(c.sno,1,4)='0105' then '西点组'                
+                WHEN substr(c.sno,1,4)='0106' then '代销品'
+                WHEN substr(c.sno,1,4)='0108' then '裱花组'
+                WHEN substr(c.sno,1,4)='0109' then '水吧组'
+                WHEN substr(c.sno,1,4)='0111' then '中点类'
+                WHEN substr(c.sno,1,4)='0112' then '三明治'
+                ELSE '其他' 
+            END) cat_name -- 分类
+        from td_sale_detail b 
+        inner join td_sale a on b.companyno=a.companyno and b.shop=a.shop and b.saleno=a.saleno 
+        ${if(len(para_iscoupon)==0,""," left join (select companyno,saleno,shop,bdate,sum(hIsCoupon) hIsCoupon from(select companyno,saleno,shop,bdate,case when PAYCODE='#04' AND CTType NOT IN ('KRD001','KRD002','KRD003','KRD004','KED026') then 1 else 0 end hIsCoupon from td_sale_pay)group by companyno,saleno,shop,bdate) z on z.companyno = a.companyno and z.saleno=a.saleno and a.shop=z.shop and z.bdate = a.bdate")}
+        left join tb_goods c on c.companyno = b.companyno and c.pluno = b.pluno 
+        where b.companyno='${para_companyno}' and a.bdate between '${format(para_bdate,"yyyyMMdd")}' and '${format(para_cdate,"yyyyMMdd")}'
+            and a.type=0 
+            and substr(c.sno,1,6)!='B10601' 
+            and substr(c.sno,1,6)!='011002'
+            ${if(para_iscoupon==0," and z.hIsCoupon = 0","")}
+            ${if(para_iscoupon==1," and z.hIsCoupon != 0","")} 
+        group by b.pluno,a.shop,b.saleno,c.sno,a.bdate
+    )
+    where 1 = 1
+        ${if(len(para_cType)=0,"and cat_name!='裱花组'",if(para_cType='裱花组',"and cat_name='裱花组'","and (cat_name in ('"+REPLACE(para_cType,",","','")+"') and cat_name!='裱花组')"))}
+        -- ${if(len(para_shop)==0," and shop in (SELECT Shop FROM Platform_Staffs_Shop where opno='"+para_opno+"')"," and shop in ('" + REPLACE(para_shop,",","','") + "')")}
+),
+/* 连接层 */
+门店商品客流 as (
+    select
+        bdate,pluno,shop,count(distinct saleno) cnt 
+    from 
+        销售明细
+    group by pluno,shop,bdate
+),
+单品总客流 as (
+    select 
+        pluno
+        ,bdate
+        ,count(distinct saleno) cnt  
+    from 
+        销售明细
+    group by 
+        pluno,bdate
+),
+门店客流 as (
+    select 
+        shop
+        ,bdate
+        ,count(distinct saleno) cnt  
+    from 
+        销售明细
+    group by 
+        shop,bdate
+),
+卖了的门店 as (
+    select BDATE,PLUNO
+    ,LISTAGG(SHOP,',') WITHIN GROUP(ORDER BY SHOP) SHOPS 
+    FROM 门店商品客流 GROUP BY BDATE,PLUNO
+),
+卖了的门店总客流 as (
+    SELECT
+        卖了的门店.bdate,
+        卖了的门店.PLUNO
+        ,SUM(CASE WHEN instr(卖了的门店.shops,门店客流.shop)>0 then 门店客流.cnt else 0 end) companycnt
+    FROM 卖了的门店
+    LEFT JOIN 门店客流 ON 卖了的门店.bdate = 门店客流.bdate
+    GROUP BY 卖了的门店.bdate,卖了的门店.PLUNO
+),
+/** 中间层 */
+每日万购率明细 AS (
+    SELECT 
+        门店商品客流.bdate
+        ,门店商品客流.pluno
+        ,单品总客流.cnt 单品_单数
+        ,卖了的门店总客流.companycnt 卖了的门店总客流
+        ,ROUND(单品总客流.cnt*10000 / 卖了的门店总客流.companycnt,0) 万购率 -- 公司万购率
+    FROM
+        门店商品客流
+    LEFT JOIN 单品总客流 ON 单品总客流.bdate = 门店商品客流.bdate and 单品总客流.pluno = 门店商品客流.pluno
+    -- LEFT JOIN 门店客流 ON 门店客流.bdate = 门店商品客流.bdate AND 门店客流.Shop = 门店商品客流.Shop
+    LEFT JOIN 卖了的门店总客流 ON 卖了的门店总客流.bdate = 门店商品客流.bdate AND 卖了的门店总客流.pluno = 门店商品客流.pluno
+    where 1 = 1
+        ${if(len(para_pluno)==0,""," and 门店商品客流.pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
+    GROUP BY
+        门店商品客流.bdate
+        ,门店商品客流.pluno
+        ,单品总客流.cnt
+        ,卖了的门店总客流.companycnt
+    ORDER BY 门店商品客流.bdate ASC
+),
+单品万购率汇总 AS (
+    SELECT 
+        row_number() over (order by ROUND(SUM(单品总客流.cnt)*10000 / SUM(卖了的门店总客流.companycnt),0) desc) idx
+        ,门店商品客流.pluno
+        ,SUM(单品总客流.cnt) 单品_单数
+        ,SUM(卖了的门店总客流.companycnt) 卖了的门店总客流
+        ,ROUND(SUM(单品总客流.cnt)*10000 / SUM(卖了的门店总客流.companycnt),0) 万购率 -- 公司万购率
+    FROM
+        门店商品客流
+    LEFT JOIN 单品总客流 ON 单品总客流.bdate = 门店商品客流.bdate and 单品总客流.pluno = 门店商品客流.pluno
+    LEFT JOIN 门店客流 ON 门店客流.bdate = 门店商品客流.bdate AND 门店客流.Shop = 门店商品客流.Shop
+    LEFT JOIN 卖了的门店总客流 ON 卖了的门店总客流.bdate = 门店商品客流.bdate AND 卖了的门店总客流.pluno = 门店商品客流.pluno
+    where 1 = 1
+        ${if(len(para_pluno)==0,""," and 门店商品客流.pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
+        ${if(len(para_shop)==0 && para_viewtype==0," and 门店商品客流.shop in (SELECT Shop FROM Platform_Staffs_Shop where opno='"+para_opno+"')"," and 门店商品客流.shop in ('" + REPLACE(para_shop,",","','") + "')")}
+    GROUP BY
+        门店商品客流.pluno
+    ORDER BY 万购率 DESC
+),
+每日门店万购率明细 AS (
+    SELECT 
+        门店商品客流.bdate
+        ,门店商品客流.pluno
+        ,门店商品客流.shop
+        ,门店商品客流.cnt
+        ,门店客流.cnt 门店_单数
+        ,单品总客流.cnt 单品_单数
+        ,卖了的门店总客流.companycnt 卖了的门店总客流
+        ,ROUND(单品总客流.cnt*10000 / 卖了的门店总客流.companycnt,0) 万购率 -- 公司万购率
+    FROM
+        门店商品客流
+    LEFT JOIN 单品总客流 ON 单品总客流.bdate = 门店商品客流.bdate and 单品总客流.pluno = 门店商品客流.pluno
+    LEFT JOIN 门店客流 ON 门店客流.bdate = 门店商品客流.bdate AND 门店客流.Shop = 门店商品客流.Shop
+    LEFT JOIN 卖了的门店总客流 ON 卖了的门店总客流.bdate = 门店商品客流.bdate AND 卖了的门店总客流.pluno = 门店商品客流.pluno
+    where 1 = 1
+        ${if(len(para_pluno)==0,""," and 门店商品客流.pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
+    GROUP BY
+        门店商品客流.bdate
+        ,门店商品客流.pluno
+        ,门店商品客流.shop
+        ,门店商品客流.cnt
+        ,门店客流.cnt
+        ,单品总客流.cnt
+        ,卖了的门店总客流.companycnt
+    ORDER BY 门店商品客流.bdate ASC
+),
+门店万购率明细 AS (
+    SELECT 
+        门店商品客流.pluno
+        ,门店商品客流.shop
+        ,sum(门店商品客流.cnt) cnt
+        ,sum(门店客流.cnt) 门店_单数
+        ,ROUND(sum(门店商品客流.cnt)*10000 / sum(门店客流.cnt),0) 门店万购率
+        ,SUM(单品总客流.cnt) 单品_单数
+        ,SUM(卖了的门店总客流.companycnt) 卖了的门店总客流
+        ,ROUND(SUM(单品总客流.cnt)*10000 / SUM(卖了的门店总客流.companycnt),0) 万购率 -- 公司万购率
+        ,ROUND(sum(门店商品客流.cnt)*10000 / sum(门店客流.cnt),0) - ROUND(SUM(单品总客流.cnt)*10000 / SUM(卖了的门店总客流.companycnt),0) 差异 -- 万购率差异 
+    FROM
+        门店商品客流
+    LEFT JOIN 单品总客流 ON 单品总客流.bdate = 门店商品客流.bdate and 单品总客流.pluno = 门店商品客流.pluno
+    LEFT JOIN 门店客流 ON 门店客流.bdate = 门店商品客流.bdate AND 门店客流.Shop = 门店商品客流.Shop
+    LEFT JOIN 卖了的门店总客流 ON 卖了的门店总客流.bdate = 门店商品客流.bdate AND 卖了的门店总客流.pluno = 门店商品客流.pluno
+    where 1 = 1
+        ${if(len(para_pluno)==0,""," and 门店商品客流.pluno in ('"+ REPLACE(para_pluno,",","','") +"')")}
+    GROUP BY
+        门店商品客流.pluno
+        ,门店商品客流.shop
+    ORDER BY 差异 DESC,门店商品客流.shop asc
+)
+/* 最终 */
+SELECT * FROM ${if(para_viewtype==0,'单品万购率汇总',if(para_viewtype==1,'门店万购率明细','dual'))}]]></Query>
 <PageQuery>
 <![CDATA[]]></PageQuery>
 </TableData>
@@ -416,13 +398,13 @@ group by
 <![CDATA[false]]></CustomData>
 <Dictionary class="com.fr.data.impl.FormulaDictionary">
 <FormulaDict>
-<![CDATA[=['','现烤组','工厂','西点组','水吧组','代销品','裱花组']A]]></FormulaDict>
+<![CDATA[=['','现烤类','面包类','蛋糕类','饼干类','西点组','代销品','裱花组','水吧组','中点类','三明治']A]]></FormulaDict>
 <EFormulaDict>
 <![CDATA[=if($$$='','全部',$$$)]]></EFormulaDict>
 </Dictionary>
 <widgetValue>
 <O>
-<![CDATA[现烤组]]></O>
+<![CDATA[现烤类]]></O>
 </widgetValue>
 </InnerWidget>
 <BoundsAttr x="425" y="7" width="89" height="21"/>
@@ -449,7 +431,7 @@ group by
 </Dictionary>
 <widgetValue>
 <O>
-<![CDATA[]]></O>
+<![CDATA[0]]></O>
 </widgetValue>
 </InnerWidget>
 <BoundsAttr x="330" y="7" width="80" height="21"/>
@@ -600,6 +582,56 @@ group by
 </Border>
 <LCAttr vgap="0" hgap="0" compInterval="0"/>
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
+<InnerWidget class="com.fr.form.ui.container.WScaleLayout">
+<WidgetName name="para_shop"/>
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
+<MobileBookMark useBookMark="false" bookMarkName="comboCheckBox0" frozen="false"/>
+<PrivilegeControl/>
+</WidgetAttr>
+<Margin top="0" left="0" bottom="0" right="0"/>
+<Border>
+<border style="0" color="-723724" borderRadius="0" type="0" borderStyle="0"/>
+<WidgetTitle>
+<O>
+<![CDATA[新建标题]]></O>
+<FRFont name="SimSun" style="0" size="72"/>
+<Position pos="0"/>
+</WidgetTitle>
+<Alpha alpha="1.0"/>
+</Border>
+<LCAttr vgap="0" hgap="0" compInterval="0"/>
+<Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
+<InnerWidget class="com.fr.form.ui.ComboCheckBox">
+<WidgetName name="para_shop"/>
+<WidgetID widgetID="c606b8fd-4722-4aa9-84af-d1327ec24a78"/>
+<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
+<MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
+<PrivilegeControl/>
+</WidgetAttr>
+<watermark>
+<![CDATA[选择门店]]></watermark>
+<Dictionary class="com.fr.data.impl.TableDataDictionary">
+<FormulaDictAttr kiName="ORGANIZATIONNO" viName="ORG_NAME"/>
+<TableDataDictAttr>
+<TableData class="com.fr.data.impl.NameTableData">
+<Name>
+<![CDATA[NRC_DCP_门店查询]]></Name>
+</TableData>
+</TableDataDictAttr>
+</Dictionary>
+<widgetValue>
+<O>
+<![CDATA[]]></O>
+</widgetValue>
+<RAAttr isArray="false" supportTag="false"/>
+</InnerWidget>
+<BoundsAttr x="0" y="20" width="1020" height="21"/>
+</Widget>
+<ShowBookmarks showBookmarks="false"/>
+</InnerWidget>
+<BoundsAttr x="0" y="20" width="1020" height="20"/>
+</Widget>
+<Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.container.WTitleLayout">
 <WidgetName name="report_STAR"/>
 <WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
@@ -647,12 +679,26 @@ group by
 <ColumnPrivilegeControl/>
 <RowPrivilegeControl/>
 <RowHeight defaultValue="723900">
-<![CDATA[723900,1296000,1296000,1296000,0,723900,723900,723900,1296000,1296000,1440000,723900]]></RowHeight>
+<![CDATA[723900,1296000,1296000,0,723900,723900,723900,1296000,1296000,1440000,723900]]></RowHeight>
 <ColumnWidth defaultValue="2743200">
 <![CDATA[2743200,2016000,4032000,4032000,2705100,2743200,2743200,2743200,2304000,2304000,2743200,3456000,2743200]]></ColumnWidth>
 <CellElementList>
 <C c="0" r="0">
+<O t="XMLable" class="com.fr.general.ImageWithSuffix">
+<FineImage fm="png">
+<IM>
+<![CDATA[lO<9(kN.ld@UNU%p%320!n,@:beXK/O.Y-'beV$8kiq(D;DIA%2/g3@!s+_'q.AOO*L<K<GB
+6I-3$q^<(FkZ_rB?E5ZUW17it\lj?e$>6,16X8*=ltbF54XVGk`*P,$kb9CHO57!X<GI"]ABm
+a@1&nN)\V$dBJ;6MD&$*WjcGkLmNNrrrcJ%"^pjZIV/lF762Y"q)Aq-Q&pt<V#lSUbYklhtG
+SaR9*Z'$OIno58<Xh6Q+`'5C!X2L^(C?WDlekZs<]A"RJiK1oSfQs9k8D:%2J<NDGiCW'_`YJ
+>45]A`M:%#?hUl1hY7!G&:/ToJqik)XPlq33O8HJc,9-fap%G^JnZMLSt9XpYGOF)g-jWl]ABs
+j,2YCSFX.]A.rX>BUt-P'-4HKKIP0rV&t/e~
+]]></IM>
+</FineImage>
+</O>
 <PrivilegeControl/>
+<CellGUIAttr showAsDefault="true"/>
+<CellPageAttr/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
 <Name>
@@ -664,6 +710,31 @@ group by
 </HighlightList>
 <Expand/>
 </C>
+<C c="1" r="0">
+<O t="XMLable" class="com.fr.general.ImageWithSuffix">
+<FineImage fm="png">
+<IM>
+<![CDATA[!CR%%r/"6F7h#eD$31&+%7s)Y;?-[s6N@)d6O3kr!!('^\8qWM!t.[g5u`*!m@)FbUG*+2.3
+U!R#q:E<;F6uC3@21fPX#O(JJ,BoQ]AMD6Esiq,j"n!'NFWWWBD`HRrVH:TK$Z?HnJRf8mSEF
+3bjT!>*Msk>=^.*D(m==g`&)gX9e'XD]AF@,"ZdmW-I3>[PVE5En31`2EXuM_/#d-.I3s_uKL
+-$$NkRQd9KI]A_!a?JFbE3CtBN?5tX$hju1C\I3,63T*JDKNp?fBsb\&EBlM]A6+@`Y;"i0dr*
+u-lmkbKbl6B`F9MkYJ*nGj@Klpph2aWQ>S2VY^?uh+ScQWO7dod<)Qst^m"r9j_Ysc!l+AK6
+'(.Q>c@ljO#<"0ti<(BnE&J-OK=N4NdQg+hNsZ2[_T6^e.B(9?*+]AD60EB1jJkk':!5p(?!)
+*c>VT8\-b;g$`7^ZV0JpNFr>k\;P!9uY>iArR?##YOm[g9iTI*&VBgV@d3C(ta-EsBKCn>la
+\"9nlp\g^PZ_@C'5#Xol;0\AW=!F^Vs%O(n9.S#t[!IAT.L+NVg"\=d4%#b?;O8;Xf@n_HLJ
+XEnHi<>GK@TM]Am$c39&"iM,?d/i24(kM;uJIr"3Mh;:gFIFmgiq!A*F@h(o/f@S)Is,N[VjJ
+dM.`2PP>NQX+`+\$aB(mq?'Zi[^rZmYYJ\='^Gr)9'iHueZ$8l(M]Al)&nP(_UL!99%)F_=I7
+,\2)3eqO2d_S,773UM&5n')1[@<m>XVF_D>@K\D\$^]A[NJX-PH?hQ\&_spcjs3@Wk<=!UqmB
+eB97">W/aGDVd0`2U2$,[lQEVRS]Aoq"r!s&855.*272'nnYF$]A/%2PZ^q=SX`k+YXYP_Cu9i
+XDiRl(7rVPu333.Fs1HJ4/MO*a:[gF`$:##L]A@;@.>"Q$BAgS4.N=eVlD0"8O+RsKFq")=m4
+!ou.UK\0.M44lAr^@>p8EYY0@e]A.<3f4E(pqDid2I$XlU4iZFPnXdV5cY(id?K5,rkHS*]A5H
+.AKHl![s!$V^4sPFP!&]A^?Rp1<u:B1@p!(fUS7'8jaJc~
+]]></IM>
+</FineImage>
+</O>
+<PrivilegeControl/>
+<Expand/>
+</C>
 <C c="2" r="0">
 <O>
 <![CDATA[]]></O>
@@ -672,7 +743,7 @@ group by
 <CellPageAttr/>
 <Expand/>
 </C>
-<C c="0" r="1" rs="4" s="0">
+<C c="0" r="1" rs="3" s="0">
 <O>
 <![CDATA[产品星级]]></O>
 <PrivilegeControl/>
@@ -703,51 +774,21 @@ group by
 <CellPageAttr/>
 <Expand/>
 </C>
-<C c="3" r="1" s="2">
-<O>
-<![CDATA[门店]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="4" r="1" s="2">
-<O>
-<![CDATA[商品_门店_单数]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="5" r="1" s="2">
-<O>
-<![CDATA[门店_总_单数]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="6" r="1" s="2">
+<C c="6" r="1" s="0">
 <O>
 <![CDATA[商品_总_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="7" r="1" s="2">
+<C c="7" r="1" s="0">
 <O>
 <![CDATA[全体_总单数]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="8" r="1" s="1">
-<O>
-<![CDATA[万购率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
 <C c="9" r="1" s="1">
 <O>
 <![CDATA[万购率]]></O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="10" r="1" s="2">
-<O>
-<![CDATA[差异]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
@@ -759,241 +800,28 @@ group by
 <CellPageAttr/>
 <Expand/>
 </C>
-<C c="1" r="2" s="2">
-<O t="I">
-<![CDATA[1]]></O>
-<PrivilegeControl/>
-<HighlightList>
-<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
-<Name>
-<![CDATA[条件属性1]]></Name>
-<Condition class="com.fr.data.condition.ListCondition"/>
-<HighlightAction class="com.fr.report.cell.cellattr.highlight.RowHeightHighlightAction"/>
-</Highlight>
-</HighlightList>
-<Present class="com.fr.base.present.FormulaPresent">
-<Content>
-<![CDATA[=&C3]]></Content>
-</Present>
-<Expand leftParentDefault="false" left="C3"/>
-</C>
-<C c="2" r="2" s="3">
+<C c="1" r="2" s="0">
 <O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="PLUNO"/>
-<Condition class="com.fr.data.condition.ListCondition"/>
-<Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
-<Result>
-<![CDATA[$$$]]></Result>
-<Parameters/>
-</O>
-<PrivilegeControl/>
-<Present class="com.fr.base.present.DictPresent">
-<Dictionary class="com.fr.data.impl.TableDataDictionary">
-<FormulaDictAttr kiName="PLUNO" viName="PLUNAME"/>
-<TableDataDictAttr>
-<TableData class="com.fr.data.impl.NameTableData">
-<Name>
-<![CDATA[商品]]></Name>
-</TableData>
-</TableDataDictAttr>
-</Dictionary>
-</Present>
-<Expand dir="0" order="2">
-<SortFormula>
-<![CDATA[IF(LEN(para_shop) = 0, J4, I4)]]></SortFormula>
-</Expand>
-</C>
-<C c="3" r="2" s="2">
-<O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="SHOP"/>
+<Attributes dsName="汇" columnName="IDX"/>
 <Complex/>
 <RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
 <Parameters/>
-</O>
-<PrivilegeControl/>
-<Present class="com.fr.base.present.DictPresent">
-<Dictionary class="com.fr.data.impl.TableDataDictionary">
-<FormulaDictAttr kiName="VIEWNO" viName="VIEWNAME"/>
-<TableDataDictAttr>
-<TableData class="com.fr.data.impl.NameTableData">
-<Name>
-<![CDATA[门店分区]]></Name>
-</TableData>
-</TableDataDictAttr>
-</Dictionary>
-</Present>
-<Expand dir="0"/>
-</C>
-<C c="4" r="2" s="2">
-<O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition"/>
-<Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.SummaryGrouper">
-<FN>
-<![CDATA[com.fr.data.util.function.SumFunction]]></FN>
-</RG>
-<Result>
-<![CDATA[$$$]]></Result>
-<Parameters/>
-</O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="5" r="2" s="2">
-<O t="DSColumn">
-<Attributes dsName="门店总单数" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition">
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[COMPANYNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[SHOP]]></CNAME>
-<Compare op="0">
-<ColumnRow column="3" row="2"/>
-</Compare>
-</Condition>
-</JoinCondition>
-</Condition>
-<Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
-<Result>
-<![CDATA[$$$]]></Result>
-<Parameters/>
-</O>
-<PrivilegeControl/>
-<Expand dir="0"/>
-</C>
-<C c="6" r="2" s="2">
-<O t="DSColumn">
-<Attributes dsName="单品总单数" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition">
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[COMPANYNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[PLUNO]]></CNAME>
-<Compare op="0">
-<ColumnRow column="2" row="2"/>
-</Compare>
-</Condition>
-</JoinCondition>
-</Condition>
-<Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
-<Result>
-<![CDATA[$$$]]></Result>
-<Parameters/>
-</O>
-<PrivilegeControl/>
-<Expand dir="0"/>
-</C>
-<C c="7" r="2" s="2">
-<O t="DSColumn">
-<Attributes dsName="门店总单数" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition">
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[COMPANYNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[SHOP]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="SHOP"/>
-</Compare>
-</Condition>
-</JoinCondition>
-</Condition>
-<Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.SummaryGrouper">
-<FN>
-<![CDATA[com.fr.data.util.function.SumFunction]]></FN>
-</RG>
-<Result>
-<![CDATA[$$$]]></Result>
-<Parameters/>
-</O>
-<PrivilegeControl/>
-<Expand leftParentDefault="false" left="C3"/>
-</C>
-<C c="8" r="2" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=E3 / F3]]></Attributes>
-</O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="9" r="2" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=G3 / H3]]></Attributes>
-</O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="10" r="2" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=I3 - J3]]></Attributes>
-</O>
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="1" r="3" s="5">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=SEQ(1)]]></Attributes>
 </O>
 <PrivilegeControl/>
 <CellGUIAttr showAsHTML="true"/>
 <CellPageAttr/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=LET(A,&C3, IF(A<=5,'<span class="ani ani-flipInY" style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color: #090;color: #fff;">'+A+'</span>','<span class="ani ani-flipInY" style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color:#aaa;color:#fff;">'+A+'</span>'))]]></Content>
+<![CDATA[=LET(A,$$$, IF(A<=5,'<span class="ani ani-flipInY" style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color: #090;color: #fff;">'+A+'</span>','<span class="ani ani-flipInY" style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color:#aaa;color:#fff;">'+A+'</span>'))]]></Content>
 </Present>
-<Expand leftParentDefault="false" left="C3"/>
+<Expand dir="0"/>
 </C>
-<C c="2" r="3" s="6">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=C3]]></Attributes>
+<C c="2" r="2" s="2">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="PLUNO"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Parameters/>
 </O>
 <PrivilegeControl/>
 <NameJavaScriptGroup>
@@ -1008,11 +836,23 @@ group by
 <![CDATA[=$$$]]></Attributes>
 </O>
 </Parameter>
+<Parameter>
+<Attributes name="para_viewtype"/>
+<O>
+<![CDATA[0]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_shop"/>
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=""]]></Attributes>
+</O>
+</Parameter>
 </Parameters>
 <TargetFrame>
 <![CDATA[_dialog]]></TargetFrame>
 <Features width="360" height="640"/>
-<ReportletName extendParameters="true" showPI="true">
+<ReportletName extendParameters="true">
 <![CDATA[/NRC/Reports/产品分析/hh_产品星级表_child.frm]]></ReportletName>
 <Attr>
 <DialogAttr class="com.fr.js.ReportletHyperlinkDialogAttr">
@@ -1025,13 +865,25 @@ group by
 </JavaScript>
 </NameJavaScript>
 <NameJavaScript name="移动端弹窗2">
-<JavaScript class="com.fr.plugin.mobile.popup.js.MobilePopupHyperlink" pluginID="com.fr.plugin.mobile.popup" plugin-version="10.4.976">
+<JavaScript class="com.fr.plugin.mobile.popup.js.MobilePopupHyperlink" pluginID="com.fr.plugin.mobile.popup" plugin-version="10.4.995">
 <Parameters>
 <Parameter>
 <Attributes name="para_pluno"/>
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=$$$]]></Attributes>
+</O>
+</Parameter>
+<Parameter>
+<Attributes name="para_viewtype"/>
+<O>
+<![CDATA[0]]></O>
+</Parameter>
+<Parameter>
+<Attributes name="para_shop"/>
+<O t="XMLable" class="com.fr.base.Formula">
+<Attributes>
+<![CDATA[=""]]></Attributes>
 </O>
 </Parameter>
 </Parameters>
@@ -1057,79 +909,38 @@ group by
 </TableDataDictAttr>
 </Dictionary>
 </Present>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="3" r="3" s="7">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="4" r="3">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="5" r="3">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="6" r="3">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="7" r="3">
-<PrivilegeControl/>
-<Expand/>
-</C>
-<C c="8" r="3" s="8">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=INDEXOFARRAY(ADD2ARRAY([]A, I3), 1) * 10000]]></Attributes>
+<C c="6" r="2">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="单品_单数"/>
+<Complex/>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<HighlightList>
-<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
-<Name>
-<![CDATA[条件属性1]]></Name>
-<Condition class="com.fr.data.condition.FormulaCondition">
-<Formula>
-<![CDATA[LEN(para_shop) = 0]]></Formula>
-</Condition>
-<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
-</Highlight>
-</HighlightList>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="9" r="3" s="8">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=INDEXOFARRAY(ADD2ARRAY([]A, J3), 1) * 10000]]></Attributes>
+<C c="7" r="2" s="0">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="卖了的门店总单数"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<HighlightList>
-<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
-<Name>
-<![CDATA[条件属性1]]></Name>
-<Condition class="com.fr.data.condition.FormulaCondition">
-<Formula>
-<![CDATA[LEN(para_shop) > 0]]></Formula>
-</Condition>
-<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
-</Highlight>
-</HighlightList>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="10" r="3" s="7">
+<C c="9" r="2" s="1">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="万购率"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Parameters/>
+</O>
 <PrivilegeControl/>
-<HighlightList>
-<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
-<Name>
-<![CDATA[条件属性1]]></Name>
-<Condition class="com.fr.data.condition.ListCondition"/>
-<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
-</Highlight>
-</HighlightList>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="11" r="3" s="9">
+<C c="11" r="2" s="3">
 <O t="I">
 <![CDATA[1]]></O>
 <PrivilegeControl/>
@@ -1137,23 +948,23 @@ group by
 <CellPageAttr/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=let(shuoming,'先将单元格放大10被取整,然后除以2并取余数,除以2的结果为整星,余数为半星',a,$$$,b,int((1-&C3/B5)*10)+1,full,'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="display:inline-block;margin:auto;" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>',half,'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="display:inline-block;margin:auto;" viewBox="0 0 16 16"><path d="M5.354 5.119 7.538.792A.516.516 0 0 1 8 .5c.183 0 .366.097.465.292l2.184 4.327 4.898.696A.537.537 0 0 1 16 6.32a.548.548 0 0 1-.17.445l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256a.52.52 0 0 1-.146.05c-.342.06-.668-.254-.6-.642l.83-4.73L.173 6.765a.55.55 0 0 1-.172-.403.58.58 0 0 1 .085-.302.513.513 0 0 1 .37-.245l4.898-.696zM8 12.027a.5.5 0 0 1 .232.056l3.686 1.894-.694-3.957a.565.565 0 0 1 .162-.505l2.907-2.77-4.052-.576a.525.525 0 0 1-.393-.288L8.001 2.223 8 2.226v9.8z"/></svg>',let(c,int(b/2),d,mod(b,2),REPEAT(full,c)+REPEAT(half,d)))]]></Content>
+<![CDATA[=let(shuoming,'先将单元格放大10被取整,然后除以2并取余数,除以2的结果为整星,余数为半星',a,$$$,b,int((1-&B3/B4)*10)+1,full,'<img src="/webroot/decisioncr/view/form?id=__ImageCache__C4E6AA1ACECF15BFE54DCFF2E8396FBC&cache=true&op=fr_attach&cmd=ah_image" height="16" style="display:inline-block;margin:auto;" />',half,'<img src="/webroot/decisioncr/view/form?id=__ImageCache__DB43D89F29ECE83FD25677A7278E3E96&cache=true&op=fr_attach&cmd=ah_image" height="16" style="display:inline-block;margin:auto;" />',let(c,int(b/2),d,mod(b,2),REPEAT(full,c)+REPEAT(half,d)))]]></Content>
 </Present>
 <Expand/>
 </C>
-<C c="1" r="4">
+<C c="1" r="3">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=COUNT(C4) + 1]]></Attributes>
+<![CDATA[=COUNT(C3) + 1]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Expand leftParentDefault="false" left="A2"/>
 </C>
-<C c="8" r="4">
+<C c="8" r="3">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="0" r="5" rs="3">
+<C c="0" r="4" rs="3">
 <PrivilegeControl/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
@@ -1165,7 +976,7 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="3" r="6" cs="5">
+<C c="3" r="5" cs="5">
 <PrivilegeControl/>
 <HighlightList>
 <Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
@@ -1177,7 +988,31 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="0" r="8" rs="3" s="0">
+<C c="8" r="5">
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="10" r="5">
+<PrivilegeControl/>
+<HighlightList>
+<Highlight class="com.fr.report.cell.cellattr.highlight.DefaultHighlight">
+<Name>
+<![CDATA[条件属性1]]></Name>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<HighlightAction class="com.fr.report.cell.cellattr.highlight.ColWidthHighlightAction"/>
+</Highlight>
+</HighlightList>
+<Expand/>
+</C>
+<C c="0" r="7" rs="3" s="0">
 <O>
 <![CDATA[门店得分]]></O>
 <PrivilegeControl/>
@@ -1194,55 +1029,55 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="1" r="8" s="1">
+<C c="1" r="7" s="1">
 <O>
 <![CDATA[排名]]></O>
 <PrivilegeControl/>
 <Expand leftParentDefault="false"/>
 </C>
-<C c="2" r="8" s="1">
+<C c="2" r="7" s="1">
 <O>
 <![CDATA[门店]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="3" r="8" s="1">
+<C c="3" r="7" s="1">
 <O>
 <![CDATA[品名]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="4" r="8" s="2">
+<C c="4" r="7" s="4">
 <O>
 <![CDATA[商品_门店_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="5" r="8" s="2">
+<C c="5" r="7" s="4">
 <O>
 <![CDATA[门店_总_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="6" r="8" s="2">
+<C c="6" r="7" s="4">
 <O>
 <![CDATA[商品_总_单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="7" r="8" s="2">
+<C c="7" r="7" s="4">
 <O>
 <![CDATA[全体_总单数]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="8" r="8" s="2">
+<C c="8" r="7" s="4">
 <O>
 <![CDATA[门店购买率]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="9" r="8" s="2">
+<C c="9" r="7" s="4">
 <O>
 <![CDATA[全购买率]]></O>
 <PrivilegeControl/>
@@ -1259,13 +1094,13 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="10" r="8" s="2">
+<C c="10" r="7" s="4">
 <O>
 <![CDATA[差异]]></O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="11" r="8" s="1">
+<C c="11" r="7" s="1">
 <O>
 <![CDATA[得分]]></O>
 <PrivilegeControl/>
@@ -1273,7 +1108,7 @@ group by
 <CellPageAttr/>
 <Expand/>
 </C>
-<C c="12" r="8" s="1">
+<C c="12" r="7" s="1">
 <O>
 <![CDATA[差距]]></O>
 <PrivilegeControl/>
@@ -1290,7 +1125,7 @@ group by
 </HighlightList>
 <Expand/>
 </C>
-<C c="1" r="9" s="10">
+<C c="1" r="8" s="5">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=seq(2)]]></Attributes>
@@ -1310,11 +1145,11 @@ group by
 <Content>
 <![CDATA[=LET(A,&C10, IF(A<=5,'<span style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color: #900;color: #fff;">'+A+'</span>','<span style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color:#aaa;color:#fff">'+A+'</span>'))]]></Content>
 </Present>
-<Expand leftParentDefault="false" left="C10"/>
+<Expand leftParentDefault="false" left="C9"/>
 </C>
-<C c="2" r="9" s="10">
+<C c="2" r="8" s="5">
 <O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="SHOP"/>
+<Attributes dsName="汇" columnName="SHOP"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
 <Complex/>
 <RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
@@ -1336,12 +1171,12 @@ group by
 </Present>
 <Expand dir="0" order="2">
 <SortFormula>
-<![CDATA[L11]]></SortFormula>
+<![CDATA[=L10]]></SortFormula>
 </Expand>
 </C>
-<C c="3" r="9" s="0">
+<C c="3" r="8" s="0">
 <O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="PLUNO"/>
+<Attributes dsName="汇" columnName="PLUNO"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
 <Complex/>
 <RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
@@ -1363,49 +1198,23 @@ group by
 </Present>
 <Expand dir="0"/>
 </C>
-<C c="4" r="9" s="2">
+<C c="4" r="8" s="4">
 <O t="DSColumn">
-<Attributes dsName="门店商品销售" columnName="CNT"/>
+<Attributes dsName="汇" columnName="CNT"/>
 <Condition class="com.fr.data.condition.ListCondition"/>
 <Complex/>
-<RG class="com.fr.report.cell.cellattr.core.group.SummaryGrouper">
-<FN>
-<![CDATA[com.fr.data.util.function.SumFunction]]></FN>
-</RG>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
 <Result>
 <![CDATA[$$$]]></Result>
 <Parameters/>
 </O>
 <PrivilegeControl/>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="5" r="9" s="2">
+<C c="5" r="8" s="4">
 <O t="DSColumn">
-<Attributes dsName="门店总单数" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition">
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[COMPANYNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[SHOP]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="SHOP"/>
-</Compare>
-</Condition>
-</JoinCondition>
-</Condition>
+<Attributes dsName="汇" columnName="门店_单数"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
 <Complex/>
 <RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
 <Result>
@@ -1415,33 +1224,10 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="6" r="9" s="2">
+<C c="6" r="8" s="4">
 <O t="DSColumn">
-<Attributes dsName="单品总单数" columnName="CNT"/>
-<Condition class="com.fr.data.condition.ListCondition">
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[COMPANYNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="COMPANYNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-<JoinCondition join="0">
-<Condition class="com.fr.data.condition.CommonCondition">
-<CNUMBER>
-<![CDATA[0]]></CNUMBER>
-<CNAME>
-<![CDATA[PLUNO]]></CNAME>
-<Compare op="0">
-<SimpleDSColumn dsName="门店商品销售" columnName="PLUNO"/>
-</Compare>
-</Condition>
-</JoinCondition>
-</Condition>
+<Attributes dsName="汇" columnName="单品_单数"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
 <Complex/>
 <RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
 <Result>
@@ -1451,39 +1237,59 @@ group by
 <PrivilegeControl/>
 <Expand dir="0"/>
 </C>
-<C c="7" r="9" s="2">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=LET(A, 单数分门店和品号.select(SHOP, PLUNO = D10), sum(门店总单数.select(CNT, INARRAY(SHOP, A) > 0)))]]></Attributes>
+<C c="7" r="8" s="4">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="卖了的门店总单数"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<Expand leftParentDefault="false" left="D10"/>
+<Expand dir="0"/>
 </C>
-<C c="8" r="9" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=E10 / F10]]></Attributes>
+<C c="8" r="8" s="4">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="门店万购率"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="9" r="9" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=G10 / H10]]></Attributes>
+<C c="9" r="8" s="4">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="万购率"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="10" r="9" s="4">
-<O t="XMLable" class="com.fr.base.Formula">
-<Attributes>
-<![CDATA[=I10 - J10]]></Attributes>
+<C c="10" r="8" s="4">
+<O t="DSColumn">
+<Attributes dsName="汇" columnName="差异"/>
+<Condition class="com.fr.data.condition.ListCondition"/>
+<Complex/>
+<RG class="com.fr.report.cell.cellattr.core.group.FunctionGrouper"/>
+<Result>
+<![CDATA[$$$]]></Result>
+<Parameters/>
 </O>
 <PrivilegeControl/>
-<Expand/>
+<Expand dir="0"/>
 </C>
-<C c="1" r="10" s="0">
+<C c="1" r="9" s="0">
 <O t="I">
 <![CDATA[1]]></O>
 <PrivilegeControl/>
@@ -1491,14 +1297,14 @@ group by
 <CellPageAttr/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=LET(A,&C10, IF(A<=5,'<span style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color: #090;color: #fff;">'+A+'</span>','<span style="border-radius: 50%;width: 2.25em;height: 2.25em;display: inline-block;text-align: center;font-size: 1em;line-height: 2.25em;background-color:#aaa;color:#fff">'+A+'</span>'))]]></Content>
+<![CDATA[=LET(A, &C9, A)]]></Content>
 </Present>
-<Expand leftParentDefault="false" left="C10"/>
+<Expand leftParentDefault="false" left="C9"/>
 </C>
-<C c="2" r="10" s="6">
+<C c="2" r="9" s="6">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=C10]]></Attributes>
+<![CDATA[=C9]]></Attributes>
 </O>
 <PrivilegeControl/>
 <NameJavaScriptGroup>
@@ -1507,11 +1313,16 @@ group by
 <JavaScript class="com.fr.js.ReportletHyperlink">
 <Parameters>
 <Parameter>
-<Attributes name="para_shop"/>
+<Attributes name="para_viewshop"/>
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=$$$]]></Attributes>
 </O>
+</Parameter>
+<Parameter>
+<Attributes name="para_viewtype"/>
+<O>
+<![CDATA[1]]></O>
 </Parameter>
 </Parameters>
 <TargetFrame>
@@ -1530,14 +1341,19 @@ group by
 </JavaScript>
 </NameJavaScript>
 <NameJavaScript name="移动端弹窗2">
-<JavaScript class="com.fr.plugin.mobile.popup.js.MobilePopupHyperlink" pluginID="com.fr.plugin.mobile.popup" plugin-version="10.4.976">
+<JavaScript class="com.fr.plugin.mobile.popup.js.MobilePopupHyperlink" pluginID="com.fr.plugin.mobile.popup" plugin-version="10.4.995">
 <Parameters>
 <Parameter>
-<Attributes name="para_shop"/>
+<Attributes name="para_viewshop"/>
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
 <![CDATA[=$$$]]></Attributes>
 </O>
+</Parameter>
+<Parameter>
+<Attributes name="para_viewtype"/>
+<O>
+<![CDATA[1]]></O>
 </Parameter>
 </Parameters>
 <TargetFrame>
@@ -1564,27 +1380,27 @@ group by
 </Present>
 <Expand/>
 </C>
-<C c="9" r="10">
+<C c="9" r="9">
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="10" r="10">
+<C c="10" r="9">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=count(K10{K10>=0}) / count(K10)]]></Attributes>
+<![CDATA[=count(K9{K9 >= 0}) / count(K9)]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="11" r="10" s="11">
+<C c="11" r="9" s="7">
 <O t="XMLable" class="com.fr.base.Formula">
 <Attributes>
-<![CDATA[=K11 * 100 * 门店结构产品数量.select(CNT,VIEWNO = C10) / max(门店结构产品数量.select(CNT))]]></Attributes>
+<![CDATA[=K10 * 100 * 门店结构产品数量.select(CNT, VIEWNO = C9) / max(门店结构产品数量.select(CNT))]]></Attributes>
 </O>
 <PrivilegeControl/>
 <Expand/>
 </C>
-<C c="12" r="10" s="11">
+<C c="12" r="9" s="7">
 <O t="I">
 <![CDATA[1]]></O>
 <PrivilegeControl/>
@@ -1592,7 +1408,7 @@ group by
 <CellPageAttr/>
 <Present class="com.fr.base.present.FormulaPresent">
 <Content>
-<![CDATA[=IF(&C10 > 1, CONCATENATE("+ ", ROUND(ABS(L11 - L11[C10:-1]A), 2)), "🏆")]]></Content>
+<![CDATA[=IF(&C9 > 1, CONCATENATE("+ ", ROUND(ABS(L10 - L10[C9:-1]A), 2)), "🏆")]]></Content>
 </Present>
 <Expand/>
 </C>
@@ -1620,56 +1436,14 @@ group by
 <Right style="5" color="-1"/>
 </Border>
 </Style>
-<Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
-<Background name="NullBackground"/>
-<Border>
-<Top style="1"/>
-<Bottom style="1"/>
-<Left style="1"/>
-<Right style="1"/>
-</Border>
-</Style>
 <Style horizontal_alignment="2" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
-<Background name="NullBackground"/>
-<Border>
-<Top style="1"/>
-<Bottom style="1"/>
-<Left style="1"/>
-<Right style="1"/>
-</Border>
-</Style>
-<Style horizontal_alignment="0" imageLayout="1">
-<Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
-<![CDATA[#0.00%]]></Format>
-<FRFont name="SimSun" style="0" size="72"/>
-<Background name="NullBackground"/>
-<Border>
-<Top style="1"/>
-<Bottom style="1"/>
-<Left style="1"/>
-<Right style="1"/>
-</Border>
-</Style>
-<Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
-<Background name="NullBackground"/>
-<Border>
-<Top style="5" color="-1"/>
-<Bottom style="5" color="-1"/>
-<Left style="5" color="-1"/>
-<Right style="5" color="-1"/>
-</Border>
-</Style>
-<Style horizontal_alignment="2" imageLayout="1">
-<FRFont name="SimSun" style="0" size="72" foreground="-16776961" underline="1"/>
+<FRFont name="SimSun" style="0" size="72" foreground="-14701083"/>
 <Background name="NullBackground"/>
 <Border/>
 </Style>
-<Style imageLayout="1">
-<FRFont name="SimSun" style="0" size="72"/>
-<Background name="NullBackground"/>
+<Style horizontal_alignment="2" imageLayout="1">
+<FRFont name="微软雅黑" style="0" size="128" foreground="-236032"/>
+<Background name="ColorBackground" color="-1381654"/>
 <Border>
 <Top style="5" color="-1"/>
 <Bottom style="5" color="-1"/>
@@ -1678,10 +1452,18 @@ group by
 </Border>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
-<Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
-<![CDATA[#0]]></Format>
+<FRFont name="SimSun" style="0" size="72"/>
+<Background name="NullBackground"/>
+<Border>
+<Top style="1"/>
+<Bottom style="1"/>
+<Left style="1"/>
+<Right style="1"/>
+</Border>
+</Style>
+<Style horizontal_alignment="0" imageLayout="1">
 <FRFont name="微软雅黑" style="0" size="72"/>
-<Background name="ColorBackground" color="-1381654"/>
+<Background name="NullBackground"/>
 <Border>
 <Top style="5" color="-1"/>
 <Bottom style="5" color="-1"/>
@@ -1690,24 +1472,9 @@ group by
 </Border>
 </Style>
 <Style horizontal_alignment="2" imageLayout="1">
-<FRFont name="微软雅黑" style="0" size="144" foreground="-236032"/>
-<Background name="ColorBackground" color="-1381654"/>
-<Border>
-<Top style="5" color="-1"/>
-<Bottom style="5" color="-1"/>
-<Left style="5" color="-1"/>
-<Right style="5" color="-1"/>
-</Border>
-</Style>
-<Style horizontal_alignment="0" imageLayout="1">
-<FRFont name="微软雅黑" style="0" size="72"/>
+<FRFont name="SimSun" style="0" size="72" foreground="-14701083" underline="1"/>
 <Background name="NullBackground"/>
-<Border>
-<Top style="5" color="-1"/>
-<Bottom style="5" color="-1"/>
-<Left style="5" color="-1"/>
-<Right style="5" color="-1"/>
-</Border>
+<Border/>
 </Style>
 <Style horizontal_alignment="0" imageLayout="1">
 <Format class="com.fr.base.CoreDecimalFormat" roundingMode="6">
@@ -1725,481 +1492,387 @@ group by
 <heightRestrict heightrestrict="false"/>
 <heightPercent heightpercent="0.75"/>
 <IM>
-<![CDATA[m(@OAe+jb4Wl$5#5TL!'Nt$chHOVl$C1mVm!`BX><D%d<XWUoG'8k42!(h^f;*(CBn%D<V6u
-",'_)_8R*7)jaHf'/8^%LeX/=1h]AIWtVSqV,4=9arE&;_4i,*'$?dI.t)COX%mH7ugC`SiBL
-E)in[(l6Ag!e!+e.cuk=R-pKl5!%pKL1E7@[F:^U]A^^trqS>#)d8]A;gsgM0#(?U-D+'Kba2n
-mCW8MtQ8F>S%<n;le9@7WU(U=74d98gs,fMLQmX"!KJ$>EAHo8mm(01XW#nkQ4l[VHZ&72d0
-P;*Tf@C.dl0RZ11(kDg,65l,:OWB5de>,OA$kPCQCJ$gX=M^k8\2ATX?,:=_OGd#hCgIn7Ph
-p!G_@NsWmM\nC-h)3;%u1ppJ4)a-hgBm0+F<'pL&3f<H\Meg)5DLJ;beu4k9#X^fNOO$dDb!
-T_Q*b2UMqp/R5A9e5`NT+6m4nFE?O*kj,,&H7M8E2LGb.4W-4It5%@K>rj0Fa02UJZsn)4*V
-SB9CMR.K=/*A[E2kGH[J592@q77H-T#j==$NEW,j$$^<.DKE&cQgmqEd8#+`:o$A7V$C(6o^
-8i.S1=N^`hO=#X=jbd"HLjo`5`0*dL<XuL!VidWUt1uGP(e,W^Bj9g":k5h\T'O.2#T"U&,#
-Ab*)R*Bf6rkFp.Fc%E=*GtoR\-!N9G9(b=\Gk<bcFUk4ljkEiK%Yh7'7V8l2I2(%"&"L3Z>5
-8U8tumf\RVNt=P(3?\g&b2Bc4qEQ4r<ccN"cHp'%PTq^G3iU%nk^<$[amoC#&M`GiB02rgok
-"fC%X__hZcl.Slr^!Q.HiqX8)QJZp\]A5A9em]AG+tUh@i`DuO5+OWs)oNR@K=De_"\JdSkMKi
-JD@aAGci2AY#jI2Ji]A<6jN:ufmR6gnm2#Hg'O6U,e;i8_uLcY#\e[7KInR9,?PULS5;*TR,e
-D?=IUU1&T191giNP9\P6V0+H4X-X3&-"f%CjQ@d&4t7\6qTJW=%J\Kf!X-+\t$=!EWQ@+Z$]A
-oXqP]ArAhkdfJ7YhKE4e]A*G9/[epZKVXq:GHt3]AhFZ%bFF&?6**paOalp#(GZVfSsC\j\:UXG
-gJal?LR^R.71h7P&2jbT8n$;7Cf8*RPiL^CGE&ta+kK>dhj4UR"+k!G]A5Cp4V.f:E"!BBf+3
-_Q3it#SR3P%I%F%oSWeke6XQLRe:qPclm*LVS=/cQb8`)0'=fDH-lO>Pp*UWTa;/S>is+N@P
-<Xb#RbZpg;h2Fk.!D69]AmF$iG>)"I>7cC):-iPu$UAPXhf8EoghX.Ank%<K/4W9GZJ1ng4o;
-,9lU@9PUK,='-DmbNm*j#Dh'n+#M:"-(+;#PgJ9a;=+PB>2$jXqg-:?X#)T%47F2nZGDOKZ3
-gAFM<EkG?]A+]ADmdnb(V>)$S5\cP#iX2.PngsWa4jNNcgqP`]ApP\U_&)fdF\Y'o#&!io(pp@q
-Ylq,ljEh8CW9FmiJ\liofX7D[%.YPX`/Yc.)iZC]AAm/m4Dd8hc5\HK`8DUktotNh.39$;[=C
-8pEO&>(*,aYX6@.-`g]Af&c.I5M[&RA_anFAq.TkB6'"raa+@[&+hSJ2B.t]At1*@&7f[*KR#u
-jg>K5;1b8ateh`<#@5o)Ji5$6/:DiLBHno`.W<Q7u;'Y4$,5o!-ZV2V(R`!m>Gh]ABCXnVgYq
-H$:7YFan==k@36iPR%8A-&*o)DK&MoG&"d8`>S<9T/uFrU5C2J@kt,p8r\S\Ppq!1b<,#EED
-;Cnl'&`a3$>2#"*TYVa<]AK4?BI`,;U0M;b\-m=9HVrHV5iGP+3u#;cS'Dk4qcSFrg.$Y=IBJ
-kEQNJ^-Hog2R5$T+T)eWk@ZjdI>Ue(&7BN>r0!#38]A%:I-.PNeL2%f6qBVmKgU-KchghV(e:
-h0B%cAuL@uuT#/8\)4ig$R(6HUL8"A:Un@F&T;c\PRaOlj4`>.C;@FU:<sp)AA#8=aoW65B5
-=7T$\311s)/9W+p1ONh3HjLGb<-f;(-s)=Io-gV[gq9giY,`&oD^UqmMZSTlgfI-L78A[^q'
-Pebc\UqRo@IeaYpHLTI<,F`l$o\ucQu+<pSU.'l+2fWX!N]AP.@pQ/9$kBDjF6:Wa?dD"/pF+
-(^*r90(F;6hj;ZFK'B@6g13;Wf&ic^7&Fto'M@P*f6H-Z@'hceIL-?-BXZs^U6Y@F%a2kBkJ
-brk1.JI!.%9N_Nf`9oE*hGbRos1oJ:U>+Y)S4,j0)C=q6+*N#uo+@k(el^._d&F=dcHHqeE+
-))TC?#f'"2CqoK1I^"?;OY.2M/-E&pK1L!W.5>1n!AL?cUi#L(K&ef@"@NQ_bk)<rAt2X&Ls
-W1!V]AFOd-Z0!bl>V$u/kT-t,=RD#oh4?p*Th2Z`>1dkG1ZR?R?+U%$9OIcenh4L<5ef(tmA>
-P5CWm]A>.,8E5i,P-sshA%Q>s1@A8#+]A8t$<^RODD^4A8C;UM-!E,&8&N%>_"b^#4pO#'NDk;
-]Aj^;!fbN4tXF-nM$O.p]A;+(#I7lhG[:0Q-pR;cGoC<%E$-mK2Hc(FbMAW/m[[T8#p?Rf%'<k
-h\d5b#0C%posnU)!"9tc4]A$+,B]AE,,M]AK.;Dg*gB,=s^X:G'3fdC+c:hingOHuLKk5-kgjS-
-s'ea/OJ_1\*[94SYYHn=(i-q,*g.njn$I:`=#p)I"S07Uc$YPe;A%<ir%H`JTY,>edhpZiE2
-6GluNV:QA2o)]AuRammYCK)F,$dDrWtI+#<h9O\-492Wg5`-su\lFe+d<jk9GjGF??Yj\oI%U
-;Mdt`G/5?LS=+?1LV;VVX-OYPE]A.N!Fd)>XqQ7J]A5_=:@Mr[F;jB?[1XEc-?:gRU&E(j/MsP
-QAEQ,T%'^Ja>DT8%=kk$"3Ug?s":(FBWRY+Ac^p#"W&t,q6>9':q:;cHJ@4hY%0W'W'Bsu+M
-V&E2WWu`S!<0UokZG!pAH>SmjGTg->Xg,!>0EEFVrp+<_nNKEe"D\%\K6O3DD3=4n>A/F7iC
-.CZ]A%&F=0@s=BIaiF;4QfW,hSu3:-W@g]A@ZAp^-0hI<C4N`!l$E4UP)fGAa;K8GHJFicTRn#
-i/-]A&r2N%b_Q]AZ.QAVe%'BaQbG8L!]AV[DM=:s!3,6WkE:uj5DXe4>oi&D4G."G@==gqtGK9h
-YV?k2H^i,omhO-^ab\EL[5>A<<:t3D$S5o?!f=7i*g&"caRi/;;p7A-VLkN/sP(6:=97m0Db
-1E>'rp0\*`_,9XhNELi$ubN<h1^!*N:,!8>cJ)/r_rb>h/$>#<<R/E#=UfU]AVE%`7K>1#]ApC
-qAp4_WpdN$6!@G#`c[r2Pu$hp<Go:u8^r$h4QdC\DCuA;aK9ic)VLW1&mI*]Ag4n=*.!(<I0d
-?^+Ha4)_ou!KE/#ldi]Af[O-Una#;Wu0/uD-dh.'Tf7/dRSY2]A:Uk*(tn(Ja;%h6/Y7rGB3A1
-hK(?8h95`gOI%rnZ?sN4%:,X)'"#T:5_o[+I(E"%]Acm!%*3g1WN[C9'^qDt#^2sNguBQe693
-0Oe`V?>.Y&[Qd3)t_F@'JNK-mO,%D&s7=bAga*VPs:S]AZXkb<,cSYr.F*F$%=0\E7$#5sa?E
--mT9Q3H1ahVB`[/t9W04FqWF.)r-L<fgJj-;3ek6q/?-3li_dW)^.K7Z>WR'5b6EVW!F0!J.
-h=JT\$'p).n/:CIG/cO9j&JX%#_.9.I5E7?K$\C"e*R6P-;U$M24$J2+^MdFLhR0)(/6Zk2K
-Bgf)8npNEufTg&Rf&TcS+H?."!>Ud?eBNRt?^t7<(EXL6B6c[u>S."BNHsCrd,#C=09nhHlD
-9gJU)>=:pTL5%h),UHsf1[scmh>W+SIcC>0B]AhQE(%Ddb$j0ADSBc1OMYS</IH"CpWq^iFs,
-RoaQY8Z;d:#P$T\tgD/^";Reit8!Rc0iqtOk.a"Wo;2j*NS#ldKN=[Al3fNL9.t/hhUqQ$]AU
-8nNJ$[r/lH/u@[D-r:uYN%KLsWDiElKq?ID^GJE;:_'kU$E)Vb>Bbh%rJ%]A]AsJhhT*n@R1?J
-:6Sa:0T-BWCSup/+\:%[.S1u[\sA]AUB<=Be%/E(Y=[:0sjm<i]Af\jeFVoM,SUg,b6F2RLVa0
-6D@b`Z#/_14)5Np[.O*uaThG-C4rH\QDaMZZ;8Dm5`-PAL"Tcs_*6&V?KV?"q)lPP?oND6iK
-6O]A7CHh]A2<l]AHD$:gNQ[05:`E>03>gOClMC_0\;BLRH9g$AaUOlCf34PK2kMtg&bBG5mdEs7
-'@[me;L:X?+f:jC>&K7'SK^9(iRSB`H)@[IS&cP]AZ9Xl'hr%"+GVg/R0&S^^+28BMZt9-'Pr
-)<W74C#0D,'&4$KdC`87U6#(^#.c'7lMN!b@$NdXsk,t.FiWn8O?m&chUN[.;7:R+ufg[644
-Jddli!8S<cf*9SC9?"4g1IH4t#tsROqqJHb=h,7L74aL$-Yb$MZ-H)r;XgXWEZ%`7?4dI4-K
-cgN+#K'O[rRJNbM'>g7m>-_2iS+p\c,pe#PNDE8-1aF(TG3_R;LCANoW9uTm!Ui(GJQ7qO;^
-9A@j%L\F#^,q4(=u:LdpPMO4OV><t'(S_f4na8AAemd%/o]AkiZMGPm-qUp:8VfW<duG#l\]Ac
-:1f2,=\un%T%pH!V<nU]A^o!iaWF:Agi8HA&s>l"13%KP,pYiFeKW@m-V=693g&Y!_!N-?2)_
-e?m"U2,"Uim>6YhZXS=Id^!;Pm>TY=Tod/2AU448l!qpXu.,bq?%WGpbCV%Th#9B"m]Ar-G)B
-I;PBkY;jMuQn4-?kK,Z"hUbaR?&+qjQ[jhXNhV&qDNje/3mKRS@l!b^T2^(aD-2@\HZiTNOd
-rTu=RBam-[k4b_sk15+k-5imUh`,R'N$+A3mYo52p.3kYq-Zm(/3Q5hd?IW$g7K+f&OQJg>i
-=91);H^C->9%-Qr9[[b8Cr?l:%1RWlP\R?_Ao@NtW3o"r`/(4@]A8Q7@7!@1TV=BC;]A4/ENel
-B'P2h1<uLF;.ihVMsW<WU7XmKLT'LS^g%0$OM4TSlY`V7u0bPdG3V&h&O!c7H9?_H^`GKiq3
-*t#pBY[!I)GSnSN7<f.pH>SMOZ^0c`>`%0#EYd=8of;K%g;6's67qT\[=+--KTVj$\#?Fp*&
-#627#9CC/CF<A_'LS`@[8b!"jr%F06B'+dmF@OPdWj4O`YY0C<X7-[Ypg5JBS163:98Y+4>m
-<u)AT@";/lYC,RQk3n*+#h)16"7EjloO2mmd"cs6.gO>o<O,*iJ1kp2?]ARQQE>s?lCP]AdKc8
-m72TlV\s3[-:0KFAoi\pN!>;efV^^^jqtY#q`13&VA!$0W^G)U[9t4lhK$VJcNIZ8[2fnrd0
-_X*MJffI9gA.d&a`Z<o>K8!iSqd0;`HR;^;N1'/L_WC^9m,-KB0SUUF5^CBh)38m#su[gqSh
--WDYQ9!@N4:O1Tu,rl8\jr\f$X4YKkue+b!Ds&5JV3gbRIsk3((tB^TtK`>Q;cL+6`SmE[3=
-he2Hif2U56h!q1$RBs*F"O#0>m8]A>I`%B<gFe`h[^#T$`WUjX\.,E0D#*8MkDI3fEDu5[phg
-Y$,-AVu($]A<:*WF's!R#tmFkrMel7%Ao>QbH?.d-[Y]AB[b@9D&Bi*^Y]AO0Nl`oY:%sUumCf3
-CXBA0\'=T7MYFM\+L&=DE?N@2:ht=9C:227e4%-9r_fR1O+beMGgb*s(5!C@)I+&SFG%>`B:
-Eu;i@h&&n]Ae/61p.!AQcXu.aF-m51Bm`W4_]A:mbM7"rW)u7FDaS`Oc]A+tbX;Z@f&2<*1F"OZ
-LVcK";8HHu+_baT._iB]Aq!O08turnk,ZU45ljL\/'i7\d?e"7)d:)Mp$b<t5Ob@e?0`8>oe2
-!sE`U"hTFR(-0??#Z4F84o=ot.:n2IH&.@2_K9n:oX5@EQ`2*@CcC2L5]A#2*(u==/j43TSrE
-=e"J^8tm^.!N=I:8@7!#'=lhbipUeskAHq46`'LNe)Kd_API92t<V23b^]A%81Ye+,hHNE(&#
-IboJWo<q$aGGo"":'r+)<WV)!bB%THm^><&*\s!4_*gfqZUGIYObFF3^58ENt3ikjgKt"VH8
-Xdn$\(NWZV7e4TDsY%&<B-/1M05-%3cn9On*VUK8eQ8Tm_<[P'*4EHI.h^\U"jgQU6K[6h3!
-iP1g9j$M'`f[[O*aB1u\]AY:T*1\*P<'E=a2,*&c#c:g[Ln:F!S,tN7dsa,,;JYF@uK1Z;NLj
-d?K;j0!.\`"rEkQ(mQP8CGH\2@+WnP1qFYL(&I)P0a"X'&P-iIA8C0)1h&u,,TU-ZenT8O$c
-T?dg;D**%lJ#QX?Fhm=^-:<]A='0?;%^16DN18ks)HkN3I<C?Gl$`\aZ=F$SlSBg4?CiR9u8:
-rJq=k,UVe8H&LfUon9RWY@%uTp:B`7EbY7GfLQ``/g`+TsVPDYeLp^Bf;DP]A,3UpBB<VZsG4
-O(5m6Uqh$"NS4oLV=E&0@%^FR]A<md"VmaF]Ap=n_'R`]Ad:46dhb@1\#CMDd8gdNRn]AZP*DWO3
-<AmH^od3"EY@oYs:a,(LEWiW!2(Y>8Rqg;)M589M8%AEhW>oo^/]AW=!VuW(=/GDZq*c%U,FL
-k>b[,RHXh9+cNf1aM:ih,'c2S^i$<_r^Gd+S/pX9WG.<65_#KnGZ(]A/rel8MU%)3eq]AL:;@S
-X`sFqZ`:X6QqZ;$GZ5R@1_3S[TlfD5c@Rm-Q_bmId\-en*I;=a[ZM[c'Y(rE_X(MDb7mHi>h
-3DaD9nG91gs6&eumWJ19S!2<oK%[YHK=1,PF6^hNU@K*Bs-j\UC.6rOe_nl\oOPFNnJJGEr/
-;X_C+'$ns1bkOWmb$mmiEiZX!@5bEJr2\P>:PSS8Jt)ai?b1t)4r#6_oF?\eF<$9.Z<S#`]A'
-Sud8rN]AGYY@*Tgu1=idgZ:pV<A[Scu_C+UtKD/(k8h:]A+'0&_6]AoL%t4m6AXW!e#lcj3cl5%
-1i%8Un5U5em&KR5"YrI(F55<$*Gu(BKc-F7iSiHb+,I1:<tH=A;(0C%?#BkV?E3eTd(h%mR]A
-I%#M%7'#n[^Wm6VR0)eja)l;82a03s"KKq*BDZroU-\)_N'q<IqRU!kg2WCf#N4HntrW/JUX
-+AcJ7]A(9OjiRpcJ,ZkOUMrG)JNI&Bj*YW$ofZZJ:d>]A3)8g5k`r-LTJg6^J)T]AV5c6Q+Gk<Y
-SPJ\Wt.!]A[_[76jkornasLkNSoBL)_F0qr*L8,SG=N/9?3VQpZ`Gr7;=K-\R9T[bN<,i2?k:
-,1"=D0#Is5+Js6]AC2FAq;fJ\4j2AN.nefZ#IOhLHe%PqE<KDM@W*bAU11E^'1g;ee&dnF0@]A
-[Pb3g!jV^o.Fj!6_c-`%KQZ0^)hq@qY6I_;P1k)EHQ1\qSl;tAOQ?+3&9(imIhCS(D&kWNLC
-i,p^HhUt;"6)IfRqcp"smbqZ(rU&lB/3?7]A[#ME#EBq.Y'q)qEG+0`bMbCd'2\0D$nNmI-nY
-.bY03Cd[MtM49^E17(S>#KSQ))\_J=>=E8^sY]AJ.VN05UNBlFI.Qd)3)g\U\:dM[4hPtqT.B
-]A=r6oNZFs1o8<B[Ot0S]A@+[8>`4'ce&#s<$=:?<XcF3]AHs>WA2jaFi(?^%%>I<a%b.Ne;_Ve
-DTV]ANQL/GE,U59NceqP-[.S*IhC5:5g9KC:>(Xbrdr\i$4UhApf[\/G;iF>/3V&[S)>:!slp
-9M&lCcLJ.uX#T0liX+k:Q;"smfKGIV$jW0QR(9:*BG$e&:VhARBR/!=ELDSWNH>su`u!1FdA
-7@3]AnS/2!1SjFF]A;coF/rIhCf>4J^&!VT7BCpnEJseG$E/QJI@83gSb,HUE<sKeJ.YB"X)XH
-^fAl9%q,"rE(Vj'Y93N1]A6<O!2#.M'S&T>(l8n8*@c)tD[1Cs.sf$VBAR[4<l;UEZ%eflV7"
-aJJe&orDB3`nYB\71ZXI3C6hU3sIEp^E)5Qd++%&"?#)CKRtTZmT$<NiumZRe]AA4%J+JPMu-
-A`mP&>#>RU,Oimhpa33l[U`W^>tRHa#j!U/<u.+GCNb,TN7R3e$&*mD'<&I)1Ifa8uV,Y1_B
--YG7^.u/GqdA0p@DqZBC;4DfXKdUSAEM72gl^(?.+<k`sAH%%$*D1A$I_H8@a_obG:S@8`GN
-7:O'8jEY3<aLO_Y_a*V:P+8fh*;RKPjCf(:/oDnr5]Ac4<GT8m=>4b)kC+>(86/@B0ZnIlqM$
-*&5U/)4?/su\::]A%NEWrpcsK>s!32fJi[^.H=h:^(KRio00`1ff):$XS1oZisPiU'mfAQ1X*
-1k7L*$(-rC5mF9nSg"S&1'>(Y'I.?I?pE=N$iWs9PRXicPtap6P:S0?ZmuhlM[Y!,m,\F4`i
-It_8pG9FJ*]A"j=&O?E\"`So'o]AV9FIlkR^:dK"`N[c`S$h%h&?QC*QXlZhe)Y*dC!1-BXZtb
-UY$!G'F=:kb-5bjo;6kUf@$%H>XC4*KkG2#GB[lE_(jWk>Q`bZ<XUZS.:bZAcX(`Cq>Do&MD
-lX:"dT4k;P?IdD.@-dK/ONYNaZ?J4"pKt]A15U9\>]AVk6;"S8_#m'*'ausuX%Xb9SOG4Afaf/
-IE<-VAS=0Mccf#,50f)BrRhh9A=[)7b/L'rjH^IjfEPh^%mGHnbIViZQS>N$XgRW/*F4n(lK
-1U4%7:M'M\_DFlK?'m&a'9n6&>T,#m0]AF($iLF%hCdPue"`V-diXGLfd,kC7$N52<.[cth@_
-piY=@r/Y\8qZnEbp"%Wco7/)c4&RNuC`\,=kGhi$)<oY'=qCq90&gh!7:d5TM)[Z[KpB3Lt>
-XI1:*MUNI-EjteUHs/e2_9<3*p5+_g4N+JNG1`qYa\f'dZ`TM_6'RF2Z^n*b5M]AXKX7U4El0
-UNEl3,T'AF[@[NIik1TRkYDVLq/U`%[p0GQCgD=a+T,8(:2.WanMK>S!#ZD=oo8X+Qbt\A=Z
-Z_c*XRdu.]AV1kS6jPBbpjogdlc3`Z6D[B("NA?uVo9S(r)(HL,%@50Ob?6V4jUs8[5]Ae(p#-
-JX9f0V?P$A)jZq*nqnG$:JQ^7DDut'"BMS%%s'skPF>@`^Bh'3P1!>EfGDRPuSLnp60WG]AL(
-`VA#+.k:/o\DgYbuti;G[dTuG!I<mh@;_r^HK!@p76\,\]A<Y8++Q_^L0a]AQN=hd]AJr"BZC\;
-o%_Z6$0)@jrKKi"/N@51;@EJj[En;!5)g'5O7HPU95IB%J35iQ+5iM<k3=W-^*@kes%E=i#/
-f/&a*'pUr;DQ!7QfMFCu!*[!Kf_%XftF0'LS^g%D,OFHAEVu`UH"7W)!)ADS<GDR3I)^Be%H
-8_Yrb"&'HK\)Zr#/&j:R\Yi%M5[1&r'L3k0\iUbWC3f"Iug=eJT'=+T4]A(\2<F/+6YWeJq;F
-4Tn2YbUbsY\;H=5eBE>N>">Fk$X$XFABVkV8eRfPF-3PDSS*Bh=-^lI.@0%Tr+oSfQ#>9>J7
-5"XL^[FJ0nB%TEEI%2@Ko1(I>Aq!7_5GDQ\i#!dP6>KMACY/-4l2f%^/P.&25(eN+[PEZ%aN
-*45!.2.4Un-0FIl_6#4-1e^Y8\S;/7<62k"+d4DPelf=6*Pii)b&7Q:5?F>P;2i3lTcJW,S<
-i9;]A7lK2D)@$\gTLC)l^`i(!CJckO5e9YdG2"qg(7]Asd_hY%$Tj\gUV34@'%Y@4<,1,kGP72
-"4FSF*In99^=1/.T)f8ij&#aMWYj![.FC=P1ai)rKJO.TsTBH;4U1k#maF4.0,*lt4p)-G5H
-_6]Ab!]A!$;UCf.3khp!\cF7e3Q1OfrFu`W*kZ\$!&V#q`iTX:1m7Vl7;5A'7"27F`D(<Ei(RA
-O;nXf2mnrmq#UV`YDH`T)N__m`M.h<7Tf&;VrP.fj.!.aL*O`',88>tUR;lA]AP"']A;7\qD[q
-(pWCP[h!T\IZBkMrJUcPW.:01_FQ\$e?d9+4(Ho<ok%UO+M3F/2#YF#rZ126`ai'H.>[pUEr
-Y`eW\+A*:a]A8FIt;3RdAs"]Ad-JAhZrKlk9PNh8M^sKWkELAEQ<B_*"H7j-bbd'-A]AE]Ag@l=I
-dF0Lk;bTYOk!;+WaE<0aYH-#P;#Wb2S\`.s]AE+!'\P]A'-p3&&8.WjDaZ#i[8n]At^%U-i7qE(
-]A<2Z_qTfj&u^t<*f`[71cQ5u>_HFjmn22HPHD"]A+J(T-gNtXL<jT8NOUa@aEcU_Ff@"!5(b&
-:u6c:.CoInX6PsC7'BF*1)S7_AtfHjJLclP$^Z!;IjA,LYo8!0+J;CRph8&tI9B8s9'P*:!B
-/N@nt,B:JDGMn3C8d0/*[<TRb\5Dk:lTGGqY7XrXV\P=7(H:BA"<P)Lp9!3DpS2>Ir6]AD,c?
-!ZEj.*2*Y[*DB;TgC-_o;i2Mo^ea40FOlf)lLK1]A"]AFU;_M%@[1G<"6l3YP<@X*K,iCH1(B_
-WU%H`ger)pn$C7-j)_Tgd/NXBB.Q>qKs,6_FOdRBIW-^QG-,qphn$<ca'Z;Jh6Sl5::gfRSk
-]A<0Yi:e4LNMO=tfkK*t2dtVQ7pd1s[2F#C0QO-kpcY`V;@PiR,cT)Z--Ib`/#S&n[s`\rWbT
-K?o`\F'r)fW0E!aAu*(Oj*&Ec:-[*!,f1sUe+9l_UunCSu`n:/B/QuL.#CM6u8!34<?2[E,t
-]A$/@c]AQY<CKpLP_G)Zj\;aC^)mG#6pdL%e?PkVZNUo,?`l?'uB6Vc%jC#UA`+*9-Fhd9557e
-:$_@=o4H6RjE(SGR1J-M.Rb&$q.?$J:DOMBOg>fDKWC!VLPSqJ50?@[@olJG8/dqH!8BLnR5
-(*ON=CB,62DaNd6.UT2Bt3hg8glP[cm0^%P)@)Teco34[/fsWPOm`]A8GT+XV]Ad\]A0L%hKUW1
-SH$`Xt-P&6P7@m/S:/`a</\4<W(p@s"S;2ou#Q0M<U1mXg^Ml"8Rf@ml1d^R#GMU<WAWoJsN
-Z(VVr1#kdGs#\_,W4h7_]A'gck7$0<WXJJnI5;(aTkh:?["=KV.(JYA5QJo'5T9D+^b7Z6Mq;
-qm+A95=$JBC$4ee;Al%LC#DT.i7,r>>$=kQQZ&J*fG4)l?%_94Er$5FGcVj#*Q-b\WY?etfP
-P\"f%ujCR0ro9S+"h0AU9R2cdr7/>:Ma-;;nQk.bo</\Uncpgni,6L,Grf/6unKXX2jY4H%-
-b%H_#C$A&dRA:fVE2ob&s3@02\,9B8Gan#p/DpJUDBge8CO]A&>(7jqZ`45.n"%Cq@RKe]A*.5
-`iIU,'%$bqccS:p"4Ke;W3]A$Jc=.jg'ZR8KTb6E_Go1saP;"#A+)S1FV[lMOlT6*W(j0-V&&
-%o=9fBcNBX+5hfUklKQsOF5,EJflmJ))]ATSc`Xe'OuA")$ohm!RJCXQ(Pg9ci2"21Ro2?LPq
-<r0ZS>E=KOpH;Q4*8=f^1^QeC4m1UK\$a[h3F]A:\Yl?S_G,X&U^84d^&2-ruTZ(/bk+QZ\f!
-cfeePk?_0hn9R0aEl`2ZAj*WUNP@kqk+IA-8RhNd"4q15O-@.ml@lOZ8iH66?l2mBDO43Kj9
-1]A6rdA>.e'O[>7oE>]A/5`J!:5ghfZ&`]A,[iCo71IaDoj;5E=c3t_Neu6"i7_Vo1j0E%E(=^H
-u$rT07q@=*7aea%s9K"]AsS9:DT=j6R@P[W-)OAJ-@=61T*7c%(,]ArRI;r_mqM^t6lEQZ'YnG
-tiH\b)8V*K[_$o450A"<k_'1%d+B-g&2Y^J.!T!Ak^0#44X(^9@nGC`Ps+?A?UjZalAW>fi>
-_u2K)=RZ1LDpVTbH.sr^h=j5,C:&nOl_"^4:Va3qeS2iTT`QLbIe&N'lcPU_9O(YTf@S4>j9
-5#'Yk+OaOS?Rt"qCOh7/+=a\b%N&&PMfp>''SHBE)l4;AbnE;`Yo9';"FbKl\c'/,-]AuS_MO
-Eg&[01Q5<d@G/qqM2P1bU1%JFHCbL"iFDcCJ?eq:]A_8?+F$P`PG?t*kI`f`!s*aU&*]A+f-=O
-Xo[=Dg,?1oo;QersZg&1Nj7O3u5qTk6G7-\BLu!NAlY!D3dU+N5`C^p"Mr+)LE4>m5?h50lQ
-cRL%lcrg>k2V7F\C@oUg&t-G:G$hU&Gtkh-L!+t5]Ag]AlOnm"h$4Ard^qQ7>0X#HB(?O;Z#_i
-%DF\9bBGXZdKu&nLq4`$nG;3GYtnLMSe$P_`^)dN]AWiTb^Q-?;Wcg";lPhX9_OAeK^2kY#Mc
-GL\Nr>5gl<<3TgqDOWM2UoHIZS7'Ik'2'AD*.;%3=?B(mP"[gO>+@OQYcq`7I`q;pq3Z9+O&
-aqQ^UU$?h&Zk*a'5rBf;VjUesq_6Q^&5&Zf>aOnTt^8S31=@c^H]AcHZaY9q(IT*C36p5f""I
-_krZXt2D!f#<rDW0(eEZSfuZhtV%Hc6_=iIsY33%9R!J?DAO69[(R[:KeX"@\cO&=>SZ\Tr;
-D[GP/sJ6a(]A<`&!PTUZM=--m(u:k\%P@/-Ri\2]AFCUkX<"FMed-]A:7tQ0)%7sRJBT,S"s6&r
-ahtISpC/&l,lS@A-m+8N!M9j+mb#:hRi1PcV@Y1fjqjK2!!l97-2Kf:9"7;EhR"Wu(hII18B
-]A"8>t@]A!pXo)LVkKDhU;HM;7=GrgeTmLgO:/o=dncsAp['D0*?O&O.<lDRd.7a;V<?NB=;^T
-OPu>5Z]A<4nJ8gh.GU6iW:BBbJ++iuUK0//=$jLuHa72XZpqhVNqhioY5D!K-6LcJ(-j%[E?:
-hVf)[gQE)^?+rYEcY?tlq8J"rETmm?hSYjrn23B'<,+'k'`L+=X5hjpqnlJ+6mu&2Z7=[O_U
-ZMG>^ijWnLfQ43e7/C+StTX/(/l/4SD3Znn<)3!^33M&Tg=NO[6^[]AZ]AkmHEXofXA&(I;:c<
-PG+0ESB,EF>]A;'kEkoIT=NRX5G2qFo]A')shq\R5%RLg0q:AVES4:S^JcKA!Q!W4KS"^dgK)a
-X`-L!"KD&`!h"RIeaB,ek$BTPddJ0TH&TRd>6g1MV0kKpm9oQIs#Yd:ToIHJfDdd`'LO/WJT
-#k$4ahO)J`2TX+]A;YQm^&+MJS%qb>E2A,c?O9_;jW7&3sV*Q9<J9ha;u=D'4Z/ugN\FCDDs#
-ep)h'#i[KqgVM99SiM97F(_cg]AN&ROX;Of+n:efNC=JD7:6#M:f"66V#kdXDj"!hV'!=`Gp2
-CF'%VU_D&7;7oaq^tKG.X!_Q%nE9r`:?J:#8-#<%:Ms3<n0OXQ[9_fLF+\&P$"L7C<T8&'@#
-/X0Zt_V+@H9AV9bL;RlGdoaEW5mKIOa:UI]A(6sMY(br\hCh#[Z9<qk=[I?0)/SqS(6Ssl'01
-MYDGSL%`n6YC@n]A6)rl%+a,-9HQO6%2M9V3WKrX'q9N:212M=2*POYYClJ9B>:RUWHZ!Z-(b
-F&X@]AmlPJ6AE:06CH):j&pDI.+28n&\U!`dB*g;q+K!Xltil%(*[1S.f%7P<]A]A`7]AJrg&mh]A
-egl;rX64(?dj#pLed)ni!J!7m\?pmF@GHSnLE4\i5c850NbXInA2H@iSJC'9sD"fA6faS=OP
-6:%+?Iu\k"9ccXC"BXa8@55Tq).Me@s%W3`i#B@2YkY"mpsUs5p+2_c9[?f'a2)-'PP4!BQJ
-k@AG/'#^<g?#TZhE@NNlnYakVB=VLo5GR9?A7LUXP-Rk7g)P)SjJR3^I-&%[kVCp6`RW/9?G
-=0E$CD6feZ^+9k?6\:?MA$n.]Agn+iSLOK]AlCD^V&B;GI!*$Q'oi*`VAB&Hq9jt<p%(/]ALgA\
-Dn"7oT?%TV'=6LSI]A!KL9j3jC"Dmn]Ac5XDSqop_d\*@b=,pYAk#Q?S5Z8U1DaftWNP887MGm
-l9E+P4d5.QYXt\Q^.K:@\hKOe=&c'^'!1+Am1Fp*@"Q(eJ*$^Y#hQ>IrTR;h1MAan/GBoF0[
-W*#G\C+$Z2uT&):R;;&=jr#hSXghMQ2_\4NoFkjr>@Jj?D=Ygh:N[rg=hpV!@$7o4BhHsK04
-=T@GaH2D5&?$2[d>_i)7U5Q\u]AQmEe&_YIK&Z5D7^`ntS&Sph[2&kj0UK4o_&Q%4%/P;m0CO
-U&&d$r)Cl^*N?M\DnM>PUfK'6c^#i&A0Z4Au/717A@O9JM%BYQDC;V=kBsZip7F'*Sf88%<U
-1ro=]AV79Fs$fQfL4^:^B0jRh.]AaW%T=9bCM4DWHNH;<G@QcH%VcE5i2T<c6Kng:a6A?"=k=.
-(NF!/9eNhZVV^X&a]AQJ=Jbr>>namh-6$C7TB"-gf7e:1*J/d1U[js[jJ9(N<Ns-ZUa27AG$D
-ZLK7t$/@$d5d8cY=RA"Z,)jQm"PC(U2g[.m:'^u;)nRodX*oliFJPOgJK;Xu1G6FNp5Z]AN(I
-K^ZHn*_,eQJR<kp>O)g&p7\n"^ka?PoS(819o&%-bVU5+:0VOEU9p*O+LXa+5sQJn><Mp+]A^
-P71Q(*GDjnU^,s%83VQ`3_f1"LiHNKBEp(@0mcZr2$M<\74A(l+W<?;rEp'-Tl/QjZ.if.Z&
-`/I%>aUS1DT.%qRj*e-6ESfE8GfR9IYRR1*G7s6Z#lbFl7J0r9cP/4;[4[7t&Yt%fFinJM7I
-#k_`+G?7!]A<$HQ$E8r'OW8@8MNU8-q?"sn#I2PaQa#k;R"`WUgr#DF$GjDb^9cXSc(cp7OMX
-5Wl1A`JA]Ab'Ig4aIa=K$[='J7uij@7670bci<)$d<WGBr*SfWJsAFX`qASD[H#<q`)ZjLO@V
-Ojt1+Eg9oXnTH5gnf<2<SCb4b%FkBKbO6Ha6fuC2K._ekLY?sDs'jOZQ&V*chlH2B3/+e'PH
-S*fK,[`&aR$Ye3uF<XLd8@`I&irY^Xp-<lVA?$rk%7>W^bke(F`+7"Y<cfUlqe2itos-Y+7e
-RW2R*_k^3$c>sU^3AsIQ7:a$jqiG0W,dYKC,:%*(RAfG60mueUhk/hadi=!(YP(b3s_"^E6]A
-gPZkU&7p2MPLVlj?s=PK?^>CLn>I\n_^Kp]AqZQgrS+HO9$4CXIsYBLjd>Vr*n*ZV^.TatqgT
-B\rkGjV`kuiXk.eA9dlf\^F;S+9Y\KA6jBp/ZPEnQH$db7l4I327,R[6jm#Y"WF0gTp(Y2b/
-Pc_=Ys+Kr:G1cFfEFPiqGc(Vdn^QUb[n^1%er\g'ZMC7?p+m^pKO)94p#_,*51X`dK7>^$Ij
-X#Z^7DkAqO@A4f\_j@]AD+]Ak[bm>\pIC_AB+ca2m+_O<nE"kDo.g^%X]AKfcge2e[`G7-Nl93l
-d3nceg'3Ui^k**Y^InUEEqC)cm;HI\91OJYqrr#X#8!^[bgS"BVru)XK.58jV3Id;OjP4+@K
-m/NXi+jeT*1*f-6>f^La[-BAQFkW?(SYT9-d1gZ^MDb_^Q@e$DXr-XR+2Qks"=oteGo<-Zi:
-4jn#4ZdDXAGG?g$#?T8imNprEET6q$:SPB2M[W=>UM]A.:]A"L[A!^_3)49%q61]Ah@!Z"kg`(0
-?j]ATL3taESKb]AFef?Du*FL]AXE!^1b1jZ[U2p5K%dke)DLi]A7]Ako)tFflQq3S->9XHL1.<KmR
-Ebtn#'LKo]A)tXje=ld#Ycf/.%qnCT\q5I6LI+g,Yb#1'49naBn#QppKA>s'[]A^['2:hjbljj
-=Q*&<(m!=Wi:t1cZ0PJ1"4%8p*Y0DpkqDQUla,u5bj,Zq=J-sWajiJCT;&a^jjIRth;g4Yo5
-2Jm')!*@1.8`@Wimoqt]ATslEpb"AcoHb%mOtS;tIH!.8ji"[56'lSBE'<e,6au7+cL.3X\og
-EC9&iE(SLs"8Wr\e^H7Zt79c%m"JJT.dYCe90AqC"N#`r$O-UGlSWlth!.kT"t72l5pUgI$+
-$pUQnc6dg:Ib%7_nJl.[Tqc;+MTNqD7TuBMHok+Z.D>Rq6d.p23s"t3PXf'2>AJM.f<JJ?$/
-I_@(0O5&UAa%p=6Ob#o+V/qMCDt!BC$;7Z=Dl^k;@@!2uRjtW'7"/I2QX1&\gMpm/gTfbOMf
-cdn8&D'K`b%=RBWN;!"hT'.TTtXYC"=?%FO7hhd9\a,97%+%8q!E::%jBdKbk=0NmNCp-6&j
-!FX$@uS$)&=F;;>c-ZqHGa&aZY!=;^<4@pPIK;o.K"fc>h/q=8S*`)Je(Kq`l3]AQ-bYJ;ZD)
-.qL[%gDEIYjsMsPP@kr>KV#SPrFa4k%)@ZW+,H7qGhO^XrK2e*+Sa4Fk(J=&#`U>/H6"lgnC
-D+.f6MpaB/)J0U;r1MH7oR-,)lF?WJmPWpA.sCm?CH>gJ1@efD_-?DO+Z;N7-G3GX@`1ijMX
-\u,5$3KQ>G57%A>"kn=uY'njYU\+,%(@$'cJD=/XG43:[P:/.P0p_qFp+uDmFS`V20TfeDXr
-MVbhEA$)J]AUU<8'&Ba]A]A.)n#<#:l9c1!JnFSblDL3NC(`Z*a!$jfE;C!5htnRI2/UXk+COW+
-"JNM5F\'sk/A]ATlf8.8g.EDWVd#;;?\W*8QlP%doMTP)OCf,_Ik?PBmcVt*:-P7k)J9<rWe(
-Ytff!),Fl)0KS+\)J=n+O[>1T8aau#7Y#$`r9-uL9j1rFEA<%N7#0=bbEaXa$[=Laek%')f%
-b1nrihk_%cM^$=#A?ZdfXB1dIM+?]AG!A*=UgZab5&7]A<TA/TPY7DO9J+Ne9D'GGfhD@5(AP8
-66b*l+TagS^b3WL&a@PNG)C=)!KOCT.S'eJ%bo5rm'TbAsTVN+g)=fiUb(dci9!oH:]AWM[.5
-W?DPQs)pnU!'n#sg6p:B4M%dN_OB(/^8X>YUpje)nl@T4d0P9%u>5ctS0l9:icF*8W&P4be_
-f]A+a3b4@2Mk+UjntP`=Zut\R`q#Ok+HQkY#p\8XKT[)3;JRj&9M?5-\IT-*IUhau#,q6HG?^
-fiG@[C\K3GIGQ_%C;O/<C%\3#4l#$d747_=[DV7o>!RWR7aCr:q^2lr@&9GK(u<c_Ng<NSbA
-%$>:4CrG`t6?eapAB=>ofAG?$B(_g4)/e<a!@o^VSsA8R@2f.[NJ'd-/X:77/ERo_]A6++&jt
-I>h=E+d@/oq+QbEk@>?8<B]A_WB"]A]A5+X]AI<fbB3)D<e,3?!G6`5$%l0>p?P;YKWX@?AC(G0'
-KM!p-+s0R*snN&O=*39Uu&s`fL9,)*JWgF^VJW_cj'9]A6q*klePKL^V^8GC.lSYQ!OqEmU#`
-F\@0-uAGuGA[,0XHlS#pdP>Z87G[e3Fd;O+N7>cf*P=,0=i9?)d>-:/3C*(RAq%YU#?Q(i,6
-3B(0O:5\r?C=JCk=8g6GsnO;e.aIn<,1AS6?JJOt\=&a$Z,d!Ki"KTrEb*gegIAEo`ar!,4n
-54Q1D"j4Q[37qGI!pH=""fdI*/sS'D"s+?J.kQNo3m>USoO+]A,I`:ETLSO#s.jLL*66-:85;
-lY>JnH%aR03.rK4L'00q93#ATtL*TXr@F1C;Ik]A?h[*?r8dI+$jY&"p%V%7S54bj8;>$mUpc
-#OS#s6i"L[*Dn%B\(O"q<>Th+8<'^m/Xu@T,7k@noG)5;1WUMj2[C*-e&8s`ARCOiY`oh^@h
-c;7IHKL^PNOQ*$VS+9P1fS-EaKg"eq>aU-QebN4&WTVkT9#L/XF-acM-?A800AlX%b955oM<
-40">Am]Ak`)MhJYVRmQ+NtaWYD^.hj/4i:raF/(&'9X>fq@P6a*b=GneWS/]Agj;P"t6]A0-6*"
-oSY5s#9tf8^DUcF=tPIBJVfo1EY^/\/2O7pdg^X81QAkD-s9KWqKct,cp-Q-JHc6Zh[Qg&Y>
-o2]A?b*TV@c&00[AR9@oPcdH&2(u+*Z&!>XAT8a=U*`06ZM!n]Ajt(DG1PieQV-C]Al7<jW&Yd/
-FQio9/"B%@@-L2E?m3ui)]ASlCGVYh^s29TkmV=G,?PrJPL)<I5LU3-KJa!m,[q=<;.kjP?0K
-Ig/=r3Fpdl/Fmf295B)nk[,L?Of`;oP*e>/_p$%pXO3S+jDLX6+,Cs361Aigtgs4PCnW_lC1
-oc'S,'W#<_1PLP$Y%2Flm?dMbZ`ITFGuMqM<.lT!!622C`7M,F2t<M#Ae0?r:\_^8+?_XHp%
-5jf$4#>R7_7*b*-J,gknQn@Zh!7*!^(ggtJK!l=+4E7f93nUs_2*e?X@mEK@oO//g.9Wc_AS
-iBB&@U4L,"`O"h"PG;?06L>m76$TjR>K,#td;d`Zlq4Oe45nm3FrA&iP#_]Ap:jeRC=R`!PqF
->Lu3YXZLhr3HQR]ADqoF^U@T_mV3SAHX^@oF*+_p_GJZ]Au[=$<tq3otU0>%+'-DDJSRajNYcl
-,;4eL^^e:,99$,>I:b@h:r)<HB7reU"r3?GAQ"G]AG$<6-IML"0kCX8!$BEM%kA7ofAFBb?s9
-fYcu31%%EX*pY9uUKpbWh=@cDfE(q]A@H',9s#3Ah:H=O5qYB$6sq*m*0CL5_lQS%hB)'0qNW
-IFR?)nXP\*>A4(jkKN,:m8b%P1HA=km#fAC]A_\(FdW33*\P1L?7&s),.Y^8CRH')GfI;laPt
-'4qFj.Gd_LF/S?A:c;oW(p2fa<?,MXQkN?(/!CBlcKb_r;MBPN$7".TF%&.0"!K@jj8G`Kf0
-ik"Wo*<]AXiHS1jPK2[sP8omf>8gN6$QpNpE\(sd8O&$kf_89i,MT_DsM$JMe)\e&*>i5D?(a
-INnD7m'RN=B1AR[laq&f/]A*eLWg_\a1%gYN]A6!,rOdeWPt\0<Bc]AN194F$3[r<q*JkU8GDkV
-.OKNY&&nk6*_Us5L[C`nCV`!+Fq]Ar!`P$iis_10(K2kIN!6MmAR.0+PLl"VY,sc2!@&LfsDD
-l\J9a_qHFJP$GQL-*tVje*5h`/s)Y$QPI6g&'qBSN_1l5L*Ph&T2/%Eo%rV)n1Q=DXP6VSY+
-<bTlFYE<alX)GFfitXNf]AjNi\(?=YU2HG$qmZ[Dg"V&VI_lEOJ.gdr@uP3#g(osO6NnP:@u3
-`mSgB2c$6%7<%H'1]AH(ASVCkQEP;+3TL15,b>%bFX.li1[*GsTRG0o./`<C%;C;2H+K!=h=$
-M)QrXEo0'2H`%^5TX\@o[O"Pf2<fPZoLD1BTVSTQp',tF#hmO!4.V@.d']A,/Cgeboh#8i`tC
--dHV7,p*i1-G7Yb35fk_*BX2-EkG$1_'S;8ncKrAtbj`2@&HiEV*%((kf;ZjOH^7<POK)14p
-jB\pSc5RU+Z6,CqiN!<$1`/C;SL*!jK\4b]A)nc;PDW6Q9KAbrF=:.d)To`OWDYenT3?O"^kh
-B_I#A8eD;?-Ceij0^BVl03+%%!0+g$@/L9*YpD<k7<L)/8UC[QCbBN]A"e^nGjf;mHM48RF?&
-<%jX/(';q`!`(2XkCp87UYd"fG10J?E3OB!lDqJ=uoce6("t_@I@k4Y\e%0[-(^U<)f;BO0)
-mp%rd2S*5-g_ZAbHFL'3fP4Q=PG_M5&)dsBjl+Kf`7%BL:SD+bf)N>khn/dRSthS;qVT*o,=
-,.Nt%DWp0$\r?:'foAMG4^i@1)?p_'%qN#:VZB(#1t&,l".F[GHI=5F]ARp1>br-K7021.SOi
-<%iC(ZGVJ]A;IWZ7Ta.Jg2:6snG$M8%%,<j-=;6,]Ac"uB-2K(`h,O<kWdUDB]AD#UJ*k(rR*V=
-/8Y>k<&rJ"X0VhkjM=e)&c*Y.OYui2b[hql(kkigepg0pYHi=[E'=l$"VtLpT3O)UVhdWB:G
-\8er:RVniQ""p\K4o0bSY#1Z,q.HUSL8XkkU\:r]A1=H:/4-_(.(63/&HNf:0$E9^2lrO1g&%
-$XU(kHq)F2QH^V+[&3&*S*`Y^.1#j3-(0Cr&S6B^5^12%p!h!i;@dS`fcsVWG,5X#<-\L-X>
-c55sPD4`K68d!7c1\=]A9qJ1b[OBpH>%`/:e>Q8[\Tjs%n_XT4%Zos+5mA/2HQ97RTL*#c[Nh
-J&ulr(@(XDb)7$?O!(*X5Q7d!&of3VIHbj<^qI,.Ueb=c;nhj/PjZA3V/)&ofi>eVm<Rq@5>
-]ADmo&fi(&P&g\-[Vup9'LKo\*):_A<i\!r]AVF.(<^agL%SZmP[:ZX2)e!8ePmCM`Qfn#iY2S
-<.#@@?m!RdG8tLGpAnKUf;5f)i[cXt1b*a@E\]A>Rg\%SAR>V8hJf<87i$*h,_&7_Nf&DE[(&
-,t_dqQ3cYNfni4]ATE'3*3!VZHC-?a>(q^T8`8Ctmot2VIPt`J3WT!;%[>,74:pto]A!13f91u
-HX#<MXemd`nIniSDHrEusXFIU(ldRCbg2IkTGWA_\5PAP^c'\C`Rg!WfEn-tLb>\u=+H#6q\
-9bMifCKNpignh,'6nLd`ZNuoqU<Irb]A7rX2rm`7ldsRs4`"T9P-i/Ed(dg=Crd#50]Ale\_rq
-86]Ao<LuaE-&-Qd!0I0gZE&]A]ANig!Pl#6@@M6!Fg[o8qEhC_^`kbr;c+YO6qRgu^UZ5$h0t0#
-%n(Li-#(6YB]Am*8T'UpoJ^iDFZ<c/VU\<C$>/s]AF`.A>,"+/>4-h/'>1Blf=F?G4chV1`6+2
-Gf,R1<#6"JSPGrG!:@>T2_@4_#>7.5@3Kl*54B5O*S8/C]AARMU8$g,=?U50j)3;QC1.j@_18
-V;Y'u:^4]A)U=4>p]Al#)<6)[_.XRNlWlamgmLm3WM!Y*b;Y+qs.s9X28p.po6HF7HBe7RY7V-
-c&2b<6o@1*N/%UgEg?msI2LGchWr3c*"49@;H>u;bI=eLZ?Pp\8"c!!c7&,nBl[das0,b-am
-@$bJI^IkRh[^%*nK3f0W(WFoC:hj[E.8@!`ZW_^u?Kk7=_\Wlg;4=Xfq1)I^_ZI@]AQ_N7@=T
-Spi*emCd*#gRIiKPCb>ie&:-J4;*cF!B`',OnHa$^b<83FcUInIhY<C8Wqmu_(>bSImGnF?@
-ceN*7CF$?e4)PR2MFL4+02tK8!]AE5K331-D'GWg0L%k>KX,a7Wj>iH5oT&aQ(n?.&imYfZFu
-5`E_)C$n'V6dZmm?5*ER.b#O$LD1<6$%2u8KcVJs>qh^*#E$/T/d$iTn6Y:F0`Z\pa`6d$[E
-$g5+=Z]AH`j@Pa<kY1S)toFjJbFlAd<7%.44?<3bRiKhS+jbQaRK?^1mSS2mqRAb(8:,Dld_!
-dJ55uX,Y$Y:$RUXA\XX;4ut)!fQG(-m3ciJTkfQWC8MQF/q_Afj)Oq.%3R!`bVRZrn*[aZQ6
-%O'/L,Ib]A@"q4r@sMO)N3>Q'M(ct=K>T<L.(QoV@@jm"MiLe`9]A[Dh`9I,8)g(lY[CarYF#]A
-HjK<l,d>_Z(9rXZIs)!1<X/Rcm6Ga<=<M=IVY[#*0hA7CaDp@M7\\2BIVm\;)e_L+U@?oF>C
-_(hgF6IY;aI#Q4T</,,X2Xh7dd#qWnr*NWXZ$_eeUu@_(`@Kfc)DYW]A-aQ=]A@/7Nf#c#E=Mp
-<aVG$!ja;Vfs,\C#ZBllf#XsI7KX8;8X"<I/p"e<5?DAnm:4-8WqYqZ1mpSGMQ%PW!L@5mN=
-gu1FkNtZRt!Q4-uD1G;]Ae)=;LtoEUWeTO0/8<'<TPJ1`c)?37G1m/K0[<16m-#c*)KcuaGB2
-l`ls!*Jc41I7@LF?9mm@#"2en#"EF6*@Z3o;AZL!K0Uga#B#W(Gi+*m79@Zb[RTJYT:QL6c#
-;G`;fK6Z'7IZMR!6AcY29%4K-DXXEP+PL<L?FgGrnap,O9`aQjVY8A6B0"j8"/&3H_-YF97-
-&DERtCFLn>hh]Aeo(SDhT7]AM>K<7!q4n_V!LAn8b4T;inm=7X3WA'.RD%U$9LAK\GMk1Hi(2?
-<gCi29k9CbJ^'Dp/hATQrI`n4a9t]A>X#*2#TQ*F;9^X^skeP<=gY(BW5!K/0JICaP!+HY1]A?
-%1&QjnM8XXtYC]A83Bb$09Op0'D$LR@%QRCAOV^H$92-oqb+60aOhE$HQan[4!^&P0cPAen:J
-irQX!bMVpR4:7lGAFS;(1jMOj"j3<tjRTfGHAddqF1RuVm)eN>4<_7eW?1l8W@oi0++u;BP-
-42nM67g!0%%Qu,\QVuLg(T=tLBNKcG;1snHF=`mUpA'QK2G`8Qk;9c.lPmcXY;tdB``hT;C(
-tUJr#_b%,#;q%/IY;qEK/V4D&(YHFb:mag*-\ga^@@*lJ&Sl7*m[/R_T1hjWVBrQX[m6SgZU
-"7FNBlEXYt@dRW3he>7>8ZpkbP-TG=h=mlJfEH#1-EuSir`=FZ@A3'ViS(3K!IOZh.TcEZ`8
-\`=D$#-_GrE::i3^rTkeH]AE0cZk\,kE2/=t5mj/D<,%XhITT%hRupJYO>EM/kf6=fYUe'l6#
-4YP,[mXJpP^\#iYG'rb*=LleC1-n'nm4QKJBe,c9f+<mUR!>-L!&2I7eTW"ZDJ;d?&"#:2(*
-/GLU(^R)racHW2+Yk>h!A\<FK\E#Dl?C!is,W4j7A%9fqRpZhf@k#B/`:qFZb$LHRWcR&X)j
-_YHC80Ekb8k")gRabY8<c%Cj5O-h6\tjn(8G"hlOqMlQ5f1>3:>TN>Psg`n\Yi(aGDqRhl\M
-!b;MV;Ra8/+,=RXeVFXb^mIM/iSY:%1eor-PEGd[_KkFYZ<NreC:#X.aSY@lfU;,T`.,>1\?
-`HtZPKtsRY1F`h-m5;D<D*JX^$17p\8or=oRLiS8A4l0O8qWPuG!uJk'^uYFa;ClV_&<@meb
-!+QfmjMW2')nMcDZf_2'"iBq7H=2^DR=#?@c2*;DWR9BW8.4W&W@h23Df!SH;Ns<'d/%FHj"
-Zq2J9\(<Y)oiB#WAP_Sh<F1t6aAYok<KHs)1gZ]A#]A\oalMr4ail?E7mW>e@-cJ"%bej8BId`
-;<=c[s1o?j5\@M;>QP@[6.hs,6A_<ofm4&TQ]Ab2@g!Lm-e+e!d"c*$>G]A)8/60",5bp;a47h
-X,CljdFGimC1?4Zn&2tsIE3"ej$?ifiTmGK,G^b`ol/NnG.aXr]A<]A@)FK"o80";c-A"lAin/
-?V3N0M!#`$;#p!mc4\Ibga\iQ]Ae`]AI+r6f&MP[N[DuBT`..aTs"dlcP:YNIGI27jNS<+EBq;
-%N#R"og$a'JX@p=Zf:"kKoN7IYjmIJqUu!Y8`$"0gYJjenj)2!r=ST$\?N!Yqr5S_]A?[I34c
-7dr+TP(FUHesE./`rj@>Jl]AgRgIWZNU[?O@:d?<dF%%:Bm>N.4*gF'J&uq?%br<!G.L]A>?:h
-o:.Q:b>^!1gua&Dq6-.C^HB$FTkndj>U._B'W@YCGa7Kg/*I]AYQfS[qLQF*]As=D</39A'9sl
-'Bp4+h`U3&n('kaXg`1o1.JfVE[0>:;fD"h2=JI=(C=lUkh:7OGa7Fs>+d!0?(,k9n&.^PXL
-Ro.ia\1aT'lit^32WWK<&Ts^[?J-e3VLebBLh4q22\(JEs5E"8?CtR5,Db%&VMsZO%B0Y`9*
-2,u>d(j.o:,%0V*p>Si&adri?(^jH&i#p!C1N_`t&PYVm]AHE80)0.;/>;#0<*dgU$"bYRW3d
-boP7'-QQ2CjO@2;893S=(INt'liKL(FbC*]A?rB]AZF^\FAKObiTlNZSV3o9\BP3Xm1Uo/l5MV
-VZ4Fl(*n-NtIBlVD_Cj@pLU?8aYk*g7a'//O<F&--P0r*$B.61Q]AB()U>c@,jXcOR(LaR5Q]A
--5+$9Di3mh;;jo_Mcg_!a5)qs*&H)4(IBh(Y!>E4a<>GeQSUDp>DU#Tq;uH1#8)]AQfA%4Tp)
-9I4DVXZ'k)*U7V(@kUN&3ctQ>H;V)mKL#dc?`W1BZEj67f)5KDnFAfrnsIrpb*P^$U-/GO$I
-Y'YAsI@tSAJ3-&;-rYiUi7sAuWPuDhUo!FI4a1lN=EhMjnl=_'$5A0[dM]AG2QOaZm[eHG"@C
-Km-b.9DgL8Ps@,A'2;HE:IV7GW!r&L>PL>[&\<JaZ`VqT4sn-,N4t:*0HhTldol9rF)dH]A<U
-;WSMMbt(su+n,sA_U>u-!8,:g93po<+tR,=O>FnTRrg+mp0e<oc2EF)V]A&SsP^:s1>\l4=jS
-\ijD,i`L0on*;+e<LNaZf$-]A^&Q+nUO%JoS24'A1WSjs8P[)pN95PZIaPGXdBlOjX=.*H[Va
-<S>?B]A\&T-ap1"RbkddU(Y0:(Oig&GM[E(5V(/2Z`n\7:19U6AO,\g/XT6R,+/9RFS1cJo+W
-'biFn1'KJI&s4.UhqHd#t`EUM=&P&k$WYC"IiVk.UOI>PZIl*%r]A7]A[ueYBSe0oH=0U4/;%I
-/Yu)f(Wj((X@*=WOW>)Y>e:-a$eK!26@fj&rc>*PD)QllYoPc+&'[3'V.uD73u.$7uI`?W3<
-`5s(3:aM5uhNCq72ODZ9.HTMGTb2VDnrKqkV;>=A8j,31AQ]APW,Ah!D._W;",TO%Ll/$W-0R
-<Ye]A$ic!TA?O=oZ<VuJL?-#7hkM>*8!.FN.VA(fjoum&o(4Y=[YH"ne"u"S`/+#*G)/!lJKt
-J((r)"/k8EH@F>rQ':*h#.8<m#YTQg*4V"A/#A2+?N*q$X1lLsYU24]AJCUYS]AdiNpYU-cYmq
-L$1X>dX(QDNqOro?]Am=^-MCLY7\Wu=;cB:D!^1hc;-`3Mq8T><K@:Gj*=6pP`=I^;kMRi#B,
-TUU<=WBYJ1-80\\';Th\\XML^ph?$G`B$8lu_TA::e<TI0\]AYE*r\G$>&b[)lnBE"MZcF(Or
-`4FChK=OAnM;2S?U43H]A]Aoff7tZossNZp-+PNFQIC%3OiRQVtLXEFS?8hg#4!'\*#F&Fp7[8
-.rt>X]AdS>I0qL)!Km9$6S]A@:*P1A)e"pNQ]AMK_,A_T5/)9d3H$K!gU:s1Xen]A=#/D5/aAZLp
-Q%NjM59UYMc[[K6Bo=2Hdfal,9sLXl9;!nb&Gii#dRX[>@,%kps1a]A/SKGmSl*%+`-l:<B,H
-!+$%!Ts2/5Y);A<IYU53D3U?29))UX'_&=Q,_]AI=&IAoDZU>1u#[V&'XQQhG#gK.@+:\i9Qf
-1^;sp6<p1I,U?^L&V4+1]AuEa%>10L2G"Nl]Aq*(3I*XQT<;ra'm(Y341E-"[Iu'4^pK(h65j>
-*k&bVWp12`;qCYd"bXI8J7[S]AeoFO+ful$ae<%Joub\]A!r;1d.R]A2`!"I<HProYL,?SiWSd_
-d&f7H<(a:;hGV8T_5M8OWSWfP2Xn+/M_!J;B9%75m2EWmlVj^F)/\hgLYXlI*l[492o=I3cZ
-#IWBW$W-M_UKXa)D>Z'#?Yb6'OYEJ09tQoOTsmS8$l5I>&^9F9KY=j-XN5b[]Ac!Z+sI2iT9O
-60ssn[J*#6f`ri(NG88g/GWEhTF-G+C`IrDTcd;u(rUG*uH;TV19s[oHbp[Tb\83usC0/1#$
-j5D%.D2>i8H&c:/aEhcq/qn'0c?$=V"f,(B8^i9VSYNk1-.3N/$UAP'0aR#:\Sm-QU^>q%1/
-bhI63_eJ`N;bX^3:K0E$[Ok)H'%oBuXW_uHqR^bN"4)9/0chqOOC._S!&CMK_&\6K)'gcNgf
-/o+]A_J*<0mr5M=e*PAG9f34?P/eYq:.Qfi_kM&u[SWPO*5uoqn4f_XN#?M'4kMkJK$eKMb/*
-VQ#N1VS.HOXj\-BIBgr/I!%`I=:=YK>PFOhKtR=f>t?j?Lb.K23qo#=BGBVOHF(Gh63bO3^j
-nnos]AFCZEnrrTek#GPnsLV,4&m4Bt&N$R;HE'O%t!ENfY-;X<#QN/tW?It3#0S(*Z@U[L(NE
-=:ns`hQDCT@95<VbG6Rk"KT7:Ep"UYe[ajL[$$j`LJJlUjJVQ3-DjmXfcU!eSIpmD#O9p"6k
-G7`YjF"d`kDMg3.2t]AQ*MQ6FcQ2^kR!\_TIVO6?P;j5MOmO)YIU0<W$WrIoVNr[,LjFk\7E#
-UX$TXVu*[CZO%`HCPp]A#SiXFAW4VF()1$fno]APLi^=<b_<eW*-%[^6Y\X'k`kCRoRV;6.HGf
-bq3ePVmrkk#JA#+4#f<:?d@lf)).IDu.H9<M8gCm'6>l:\`m:F^;J6M'rpoq,;KP2=`E>o\p
-Fef8t[>QGqhLo&e_Ya6Mm5Q@(X+3Vf_NDGWXKNEPLHlIRZZ2>)kq5q=C/o&gS0OG7IbphLDf
-h=OrR"(@On)Z2i>(%A"Hdq?`^(O_as%@`l0OZ$0'q,b(erN6tCSniiQ5:b97VdMCRFeu"9:*
-<_Ag6Boo;tLo?R@T`9N.I9ZYl"_(r#o"F6^W]AaEV;1$5dXS.mkh_MZ0&BT.qLbrOeK/CW.T`
-P&i\73CbRn4uEU<d<G*kal^1L<Lf]AJ.P9?)I':9F-/QWjI'ArDgsMe^iU>0o=SNNd!/%,g>#
-13VD",D,*H`M;\GT[*fg=;O(f!nXs%qDc6'+!j?!EEH*Or.XM-pG_[IM"3q>al/<kQRl(/_X
-IrX198Yd?:jN%'1JMd0:J:rk5u+omRA*.lLaHQLE8XX3uq>3\4+E/-,'e9LI77_g.3GjZ?;C
-;+!i]A\;WdHf\)^3NCGbj^_4W:J3cp+DE]Aj,]AVHW1q4`[IGY<c'L9"9f^60J>^#UhaManQWS7
-t;.$%*u=XUGqhjd\D9c_5jh&LjJYBTC0A+W2;^JC!ar/c,K:f(\;2_E)m<(na$U4hf0O%9V^
-H!J6CPQFB?s%.aE-uR1,I-T`L52.REI\BMP^B7o,LE7U]Aikju;#E5@5L',AB"aHCsQRcFf]AQ
-&[/iSWK[7*-4%'&))^`9JfH-SJpN_$@FIS9orrP]AlRTr__tXIER/UnsXCK:7q:-<g9(qKpQ3
-.rVPJ!Hq:DEf]Au//I(pBMnaJf5<hJo3M**9.m3$&bcaQSKSG#M&!<cZ@M$&0A4GhBg_pYU#B
-b,1KZY7I!9WFiR]A:k]Ak'p>lMEY9E1G7US+r,P7fG\4^O>E+LR<5R:R"%@Q1KVA*=Vpc0hG*;
-BVY*0cJa/]AiV#*s`LIQGcVl=rK848+0&a1+*./D8/+DL26LjhasA(3KNg[Wehal(f!TGh*n@
-/-G'gOrat;WKZs5mMCVCZY&'Hm&$D;neV'1T;%fgbM-f%m7<<XqIVb&eTWiB@E_6hF]Am2,73
-:rV-WUFJZfY<negBL^=bGL9i`.u[+%q\p,S%GQ;^V\hoq)UsVPnHOcY[;V]A,p6S$p84P++"e
-d$/BNu"#Rs;S!"[Zr0?9:\snlWRC'_M2)qi=`^jk39N&d2FkLquWNEqkYddML078]A8i*E[t1
-UUX9qWGu%D6!i"k13=$Q4B4<+prLIBK<KEG_[A-Xj;b><E<@_YM'!sIIh3D2pj)6-CuQY'qR
-E1pe@\gqI\&Z[ulHe5"+HlW/uEIV3Orbn39kbZK!FK1D;=I($s4`P47lX[D"6&6dq*JhQLb%
-"pBK:e:Oo]Ak1Q%dDtDP,]AZ(fQq3f"BAk0Ch:FS(+O,oTI<8?3J,c7PcS,)ar-dV3tOE43fLY
-NoqH1Gf"\)07AqWPqRF0JR\&^9/!.Y:DRfF#X#n^_MEf<am+J_,<JU)&?`$iH0oS[lWt,EfS
-frdJ"L@qko&;fD@BH,_Hi_3/itQ\_pCkc(F8bK,`R:'A(-'N\1Km#!$OFH%caM`;=IFckRMO
-KK7L:Ygqt[V:GR+A&hBT3!<kQ5eNSCcf4-7M_VE/9kQLpl.Sc43*kBfIMTX/&6`.jm?(b+/1
-96E]A7<7+5kG(plSKO!?LpYBsoS2H6<&k5M*?nE.6BQ<(?WP-H3rLU8mO(GXAE\67EtKU[eUQ
-du$5]A'fKW#n02&TF`mpVI"'--R.&Kei/INr*WCqd?/(tD#IXEs*NM03XY1hX1cobd,P'p^cH
-sDYf8#mqLURMH'?,OtER`'%W&SAAr;5_b5Mo_^WE+4Rp"(68/e)?HQRABL.iOo4-%7\@s1Mo
-Ag+DCcV.BK5ekq]A>X>)cIif[SJG[]A:?pA)oRId)5+rk5Qt+o>dfrSd9F)gZ%e-(ej*3_J#]AD
-&S/?6'"bgD]AcP^qX"X.c=pd4^=NR8l2JE_g?(G-?Wao9meHM,O`s.Am6/['MpmT0.W%9B@)q
-[@i!8N-mg$4*#`fiEo+PETE;ca.+8T!"MuBEV7pg*s<V9q=j-+lEmXtL]AO94S8j#=r7?U+1t
-1+3AL]AK`Od#u,%"rU=,LoASk0CU4\MG:)@Nej9f@Qg`K)Z%+[B6g(TGIsQ'.1-F(p*_nk_[p
-U&"\3.j?&0f!SY9q_Z/pQj_.4\HG<eL=6_<'&#^GYTI),'9D1NNqV0XDX>2E+%q4V?\9Bo6'
-[&q0"DnG&a1HPu%uQ`=HkPK/jpT0<!&N>f:r3k:p\b]ALk^4*f`!L#Z-G<2(qG9$(a7!'Rmt,
-Nsh+CD'R.Wrp3C=uJWiFb0X>X8%4Rj&XW`l+QA9"0:0\W%06rqL!F5lD(NZC_&t6pFY#g`_m
->qnf1k_?(o^U6OU4r#mK.>PiChWk2ME!onrC.c=Z@L6gD4@?ZmL]A\&^WfC2R:a?KV9sVJ4@N
-NUcV(H>IT<dZrV"j%O)5_<pH`%AWeUo_p>1@m2B4T,[^.Qu(c305Z>[g]AR*9Eq"F?JR)6+=O
-$r"/m`@j$BK);#0]AA`maI`i[^KX2T_bu^de$gO>66j,G#jA,DXVZYG-o9(m:^^]Am]Aflb^UA/
-9p>U\hoV`k(hUjd_-XhL[Tg(97-BoS?dS9N+hII&>S_/1^+Vu`$&D<54T\BEJ*r%ar>aVId<
-uRXnBiDdf0s?>m)cm@P_G2-EL4M*h;qKjA-5<2I0QS>\/8.]A@l14eR5Ybt<7T(gVdE]A//Pjk
-9,<pR]APUHSR;o_ReCh$#/5a4Z0lpN2To>kcB_<h8WrG.$&:H1e.cmF!SFEVJP_h,!!q,\_n"
-*%rfAI$%;beTsm7duNO;FZ67$oPusJd%\_^_"B8!lr+_M2%(,$n]AoJ8[IgPDSbg&uT\aD!a[
-;<LF+?cbdO2N8=gSj6N29sf:=935q//-^$nZCrMLDn.n+PVZMKm_ab<%"4;s:m.f?3m`>p/e
-<N^7c>g5CApoZ:upX\m+uFZFkX?pGU_octl-M8&ArmK/EWc1!A[9"8^E4?Fkufj!g>hYQ*ah
-C6/afol=/BLZ]A\+!5NJ=ceN</&t^7p4:usQ`]A*iFq-oLT1PCBNAt>k2XHAKcijk7eUsNbO\O
-&JA`')cGqDJ1jb)-`ns&h4QYbECQr=<Ekc\9i#-*8XnC39#^6^3$gn0?-%m+TR>48A:r@OM;
-B1Jq5L8rS3A]A:PcmH]Aqq=J`tHlEXV^,0,-f;SAQ:8D_H9K7ISM%R"`j`L_56buh&886`@(AA
-"JhZ_JD8YiR_bGL+".9l!NX(oB9pWCHmPeaIZlA*IT;k1Y1;Zn8c$Q`MC32qAr0`GMTcHnW:
-e,[(b\rd]AcWK7i!5dHdjM/cE$6#;a8ihYLQ.h$se33pLSgOfj/3A=ZL*1/q#g+m(08Tq0M=S
-"nmnk97)5F#n.9'4#J.FJ!.%=eSW!h#<rBS(-PAs*'&P24&Ti$a<_<ENU`1kEWSc'kWAon*t
-3kfji5&2u*\tm"0fJW-?i)gcE)nPPT>1OiCZI-Bt!;+fcptrd@,dn0%aoChBs853J,.'CKDL
-fPP84K8'5P^6S;EIJAPI#=q#nTkJk)kS_"jbjs.AcIfuV:b'?LX6gcoZal(le?93NO">p1cg
-ju8qmtK5%?-ULe%9WTs,J(\c;,$B=/ej5gpj0Kke*j50]AMU+^Tajg/e:TI>W-$OHq$Y&pp0K
-on<2YF_Ad)]AVfT^ZF[sthZjFs9:)D78_7:A1:B]A``oK2KR1g.WDde=i:=fXUs7XtBd84W4E"
-LkYWSU\:;5sBikbmg4BOQQUtLcKnt7*fRF^VQJ1)&/K]AMWO"lM2eCV3BEi:\[Z);CF<@TIt^
-*C(=poE;nSRb9lRPX?)_TuD3.-=/5.3j6a)`DA#6NnIUjgklaY!WiB*3KGmn2\I`6E_hO?0r
-8fLCI6^2W5FgXaF]A+5ul0H@u#Is=m0#RM<[2QB'E3WB&TbGnZca7Es$1VH[Og.*ujl76B(kT
-?PD@NWX?`L9TIVSLi9jGT:fW0_[f+K^?_]A3A[S+$)GH2-e"kYh/ONUeNtrRf@`YH,gs6i<j%
-'iIeH9`#$SK@O$_SpQZ6u0V=eInZF*!*9aWrENf9r0&X[KIc#<*rE?'eTG:r:4e<OY]AQE937
-p2G<s6KKlnXm"BfS=.RWN3^P/L5DC,.a^2i5K>V&1Qk`9XaU'Z^A!<$(I*^qBgL!(5LV,C3Y
-fS?Y)+g3po5M4!eN>LGbZ+qU>nmChbdk[b!q%IX4e7T22P"CL;q-d@jb`dk:K/rm?Nho`*:/
-F:u'!cQ<mF7b29K*2T._LL#[0epkP?h!6[3q(6dd7BOpCcg'4+eT]AmTO0eW]A]A!i_rOW6()-)
-/Z$p%FT`Jq_4`UNh+=-o4S_LTU0N^(b[qrLA1OT5'OHSOB%@S5=Mr3MV%^LKD.r]Ap?;ZSu_d
-$bH\2tf3LH!Kh_Q.Y@XP\:q]APu1CWPb\D$Ak9CDZ0LZ&tSJ&TC9EQk$2h?D]As0%$?'e&2&>&
-#!=m#^Nh%nLRAiMc2\cV*5@1ID1LMF47GGl*l_75)&kAhY`&m5&%!J'AKN>\F2/W%0#U"g?U
-gX(jcma^Zf-Y%77EC':meF@i^KEg>`IDqFf!ofC0P)"0*5s*&F*'g[dN!B)LKBs"]AjJ__BQI
-p<k%7VKD+p$Cmu:f*htm!c=GM6gBn]A8a#HqYAD'Zs"1k/efN.oA\`6S<Q5o)r/P[fV>e0j0F
-"5YrChg)9+\\'LC?:0[O`B8J=m',iH&q-nQ*nE(>lBX#5Y(VHf!#V&*B%h/^ER#D5JbU#SBV
--nEl-&<aB`o^!Fl;o)7BKc_kQB,8/;.hZe@3a8`U<lBcEID\QQh*c-*X@<8\J85SfF\!+jnJ
-%tY!534ccHq9<=LWQ]AZq]AO,2.mL.N%:mlgqr[.jVI`]AIZDffD)HS8TMA]A/48#G3u[>mq5TjZ
-/KN[JFFScQ\V`U,*>=>ilCTQuTa$OQt:lt*CH'l9q40*dDBG!TEl7`8%dFq7Dn$n7dMlZ2Js
-/c3c.K5i&^MHD$(!O7dY.\XZ1%:uBD;AQ?^(ZMYQAcrI3p\a%5`Q.[.3VMPZUa.KKj14B"T@
-/%mMq>a[''1R>3/lOi:s"8'Nq->9[JUs_?6)8p"an`+Qn0R.N%hkYA-rPK&:e4Cd<:m/,sRT
-uc/RX95kCkH?tBD'/'!iVk0mc_/\\]AW>JPgk'cE"[Zh\!C5#tQ6&EA9TSiF\n),l.n,P]A4"0
-X>n6J@#_t?rR=9=>]AO&mg###8hSEr.BC;+emd*A#_m:UE?U\d,F,Ju1-W71O:(*67l98[S!1
-4!p(Tab1[Q!-m$:l[X:f>"lbai:B!MPUP_6l!:)-W!Slb/%*2#SD.FR"=[bQ)5,:)i)qZ&t.
->l8sXAp0V1*:j.cZN9AH@@i:JL]A/cY_iPrWG$l%pi%3*(LZ8Aq;[JaiJtj+(bSj\Nm2"J<:7
-a@bB"Uf4.<A>R!CIIBM),bMQMk46".L&VQ.[SADk"RM+701FOa4e`@1&*q#:Ra>jKHcI#fB<
-[C_ZOn)KEoTBBLtC64,^oL`SL>2FHQM?/S`CXakU5S/U`d<6Sj&Cn`1:WD&IT<]A<IT<n=TBU
-iI5bC**;k:]A6t0PW6KQS3Z(APT5d2E29PY?9*/42a_UhU''QDE"$,FQC^!U<f7hB<m*asneK
-]A!*LN:.Eo3O2aV8$>W=HuUak_hKX*"1a&1Rc.!]AqkkIW,$AV';64(UmB'JF:QB)+I1:)$^U$
-qYL[pB_nCspTk)+!GQHu,AMs3L3-J+g5idN'$lU5$2nKVQ*=l5j%L"2E^>Kh0*425fJH.sgX
-K'ik-2Ls,1%,GnRiIj;lLl:/s@%Z'CLs<3mgi=Cn7BC=8FgB=^s)qTjd4Ja:oD2Xg/*[Do!*
-8UhUbjg?2rL(f;Df+cqGP[mQD^&k"_a5rZ\*jb%,<of)5,1DF)Z!fcQ$_:p=s=D\nC9UZ%N:
-3eAbN!\W%[(L(eg5I:umD,s7Ed4`-4hMat4EjNbN1"b,@s1]A=8.$Eklo3u8p+QKWPl^;saM^
-PNM]A%sJEZK`O*U,"?cPn?D'[F!t"-Z"G+4ceDi6a"LXGQfW^eJ=-`-GI7#b#SE)NY(fm,c_@
-hrm%mT84@De-?!9?M"t5AZ*tFYriPYPPA\Wpk<(^m"]AcDrj9`rd/`*X<-Z7EHSFJ\fX*i-8p
-W!Z@9hQnLgoFdQ$(+YEPY%'N\N#H"i\VH4dsC!R7VWQ5b?]AQB4r.HBdXFGh".`Nn9#[EP!cQ
-ur!Y`NJY%sR_klBeDL<N1$3fRc(o]AhDA6T7;YaEN>2H7f\!(sMt;)nfK)<&VDoYe9J<2Q1C?
-f&c5_WCrkenC@lT(5E.9NDV/-bMZWAg\ZX;iZm:J+!Ll261+AAu"Yq@+__W2;hTq#`6H;pL=
-GYrZ)'FN'1YfH_.%U@C".0Gu\AfUjh9jBFU%`-k@12D/of0fdR>0D@SJ\f3ANP;7W(#11G&3
-#V&p]A_oN$:PGS_$\qr())2Qp1<(J.))*^#$L/HN2A[V5('N.V&.5=PMUlB$iZeF,D4eF_CVZ
-o:aZWaJTY!aI)q>b%RBCHUoM%%Uml<d!l6kP$*Bi'<8,DdkkA_+-%b&#umCu4adK:;nI=70[
-iTdGeOq!D<1T^8\=-*[%3c7[a+!tu5(7M]A^?\t]A;R_'='\oA\r'BoJr6HVe]A)`W5>#A:[6Z+
-Ag[PfE'_kAId_E@pX74M$lP)8$gSMBDM)rg5^6hCT6AY@'0@H-?`_m>ofKVM#hfmY@p"S5r@
-^$[b0;Z(0(3HK+_CF;,A0CD1ROk<3_'rV?[1#\929WB9^E>Vhb\/=TNQ9.k`7K(C+O*2/D^5
-%(VAM+1gBka'>;.R33VaXH0<M`tM`(FYjeVKEfM3&54"#O#sBJ_CYm:0`_FkXKWl^ojsg>'A
-b\RgGn-nZZA7G:^&"9Y`+WCLfk3[0c$]A6+2Oh*MSL+]A[6[QmGKCQ!dk:fK(V.j&ELRVA5?U9
-V))<6Fa@O^%-%f5*>)<Jq.QAOJRMX4a'VU:.1lRTt&mB32^a%_aFFj%r'klL7Cs[32-&1fDA
-i#i,4P>tQh_/)Qhf@e&m"-^%GZkpal_eYL,Ps0:28V?7MCo<e""%9tI`%s.(8)O#6(SRMUj#
-+C_-&I#U,?@iedsAd9[ZDD5EKDMPYdQYRc[7B\dVV]AJK5KkZMQ>/2Je:DO$HJbLL`=G*E[C"
-5\im6-HAqS0hkhF_IKBd*+4ETi5K39J:/\&lg<5T\-C(ALeu;JO/URB?]AEC;0=h%tD!eb]AMH
-cYP$nT2EKod3m1sC-AjhQ5N_hE\RI:gE@5fNi"Sn$7!:Ol>0hDM.04PUSC+B,ht"b+9'6TU^
-nQO>oT7`bF4A\,#/pNoK'9nK_t<=&7nJr"o1fJrk>!*gV#c5hS`R3RS0SG&_iXAN7:Yer^H:
-0,sMPt544dEY&,5l`![1Y<),89LAgD%\_Sr#V%NjMqoNdtUGZRuW^bC2Wd_WCX[5KTVPBLR%
-TiNq-/s>B!co:6`48)1a*;nMma.Un=1,@#le'h_C>Ml!j?9AkC_7d6=0_aDb&g:KF?_/9;!S
-$1mc,//:uFke:.uT9%-=!f':eU$2@`9"mTDZ5jLD!J4HSI-&R9ok^.g:"V]AJSu[,:!j8lNR+
-&hA@DQ>_>/"/P0t$<B7PJ?M?uJDK(W97g]AQ%-gWN.qd?iq'Xfk2*5:[>SMf'2BY+iWn&nK,_
-#]ABBa)qZS\sW(Apb)KOV")ho1LF<s\_IJ!`RKL!jrbntuTUr6@[C`41E(Pr$_#+/C24BW?D*
-amYN^IsWQSVH1@(jXOT@GJ04ej2EG"Y3%O`A1:^+B^_G*Y@k'*.)Pd]AK7s]A[Okf".\1ek+O'
-Rh9Ne/:RNM3pNc(_6XqO_u8U_RbbSpn:JMB5C:@hO-1qXZ34>aaI@&@nu2>BPgXDH*g85umd
-G/qnkb#X@E/T('iRjs'->%5sd;4giKp'_,\)S3)J3eg:d90AcjGTf^26O9`[*4e9%U\e.T>D
-[(nL81chRLu-olX,*gd#FLKq^;-[>u7OYP\;`9j#EhGBq2Lb'SD8\QfF"N`D=V(:/n3WR-g1
-kj]A(U-X*j]AZ5G(u$#Q_Sm.(URZpO&"Dg6GJrjT0:,<LO4jpeWMiG#31TdT>!%<V5c!-GVl$6
-=p'f<2M;OhG83COa3n21q%B2S?&#\aW&4)rc@C:E`(oD#Cs-]AgK!/A3W2m"di$-/MZ:P$U+,
-a$Em-(?(%c19$CR#0i]A^7t'%',VQ*VIY6P"(M[!3d!0T?a<$X![In]A:8rjZF59hl9R?7pmSS
-.\\IQL`?&Ejc_'N^b50a$:$9uV^mP$.TT+nlgfD8p$eMB."nOMM2IL?iR!3RTF`J&9S//*6>
-Z]A7RG?BFZr!#%gEb"FOj@Elb#Sqt&a1K>0?c1:Wu9`p/rm-Y+j.bZ#A"Qe%bh.QB8O7U!KlO
-cdftuMK*St)^_WQ=i]AluY$bl/F]A+k-Sn03K_-#nR2OL&#2((S$M0N_[0p1[No9qlc(3dnk%b
-]A"05.W7`_%#>,do-C@m+L\t`bD]AP&emnaEa9UJiRt=Y,REbAuP<YbrCpt*OeRcZ>`E^tYS`,
-0.-TOhB).\8QM#Ru+$p[AOqPhaXjCD+5Mu//^+=ZF4WnZGeHVbWc5:&4ZI,sdfXm3[o"\7Oj
-KZO[/YBu?LpbcO\mpa`mb"r#14*O@G:E#Ub8R%o5/9)U'2.HUS@RnEShu,od*o3brnc'f?H1
-!m@Qj/#!fUid<a1u6?+(8sETddTYn.^2maAZ3>JR9Y1L@T$9f2*Ltr#3_QJR:ci2"5;!ekdE
-IenZ[p#(@$CdD2rZ4<!uPPXbhj7ViOqdD2rZ4<!uPPXbhjL@T$9f2*Ltjj@bTL@T$9f2*Ltr
-#3_QJR:ci2"5;!ekdCsr#3_QJR:ci2"59/Ns:%Bjj?mGNRhknNs:%BjjClITfi?^k9/)&;D.
-e46P/qfb9c"[>?hf8rc*o!qI]AY0:T^#&Pg<<Y%NffkTlg<1$3(5~
+<![CDATA[m(@OAPA/W4MNnbW7VO>=*0K*R-rM96+p^S%5e9Pm!Ke9S_2a*Y.8kjJ/^gI?<E)4uJ,k]AM3e
+RJ6dNBgr,l5eFcA_A/n$daYXg?S]A^\Mg;a`Hpamp3*^^9?VN'k9C%Nh[S1Ci#X<QS+Z2Z0`-
+7A(tShb?j=<DI,>DRuOOh8H4;8e_jM%p%rHNc=n6:&jb57(X<n<m_]AF65H&jup%IeC'+rLre
+HMO^/h)k;,M_.b><Hq%*]Ar%:<U;7PE?co$:3J8ENj'>T4>L#!0^M]ALS^,UWUl)`&Y3Mpf7*m
+',a,r=o1sKsAPO`I[Yh_=?$HLnmTai6>3Ge`ehf,gO[+*G=7Vidj;oFp5cd%')pOhpKSE<t(
+,Y4D4#C\S4gP@jd[.Y%rRqO\)g;)F^QbW5UF'Q*(F?5-Ym'1bHT?9V:2tUg)n=%E1gM(ih7M
+@??dMe06HpPk,7Sq8sW<d^i6ThZPKl^TD>gB2'B"]AWUl'VN*[coVjQ2,o:TCDsdq*dGJfQ?e
+aG-(FFrPIU>qYRHgCK#P:eLfRXVpo4R&?[@VF7M$L9>_N:nZcuBCR6)XSDNoLG&H$$oR07eM
+a&Y<*+\\0@ra6O/oCh6H0EA*Suh*68pDVTB,(.oR;2KXI*@J_E&gNdC*r\r$h7*F^]A*@NeI6
+N1*<fh6)gJ*F>?>2#d!tQD@RR:47r0KT=S>=%%h7"F5[F-`@9j0A[JsceDS8FnijcVG%9%n<
+lkU2Ip&5'n&=2gE/<OQO7q#K6Qmj$\<AXAY<N#G0,bT#6-u3\`dY.t:F_%R+7r6KM37Iog"L
+"bcIX-E^f(ns&*T3!KXM<X,Z_q*_Me9Y<ePY+deo)/8P]APWnoT\Ed8cg#s^6np3=HKV%Rj-<
+<NrR,+\@(!2[jNWugWt:C^/cuugg/_=o4#GsTWJc!Ja5Al?$;&ui.n1@"kI<=^R/c$2`S"7S
+:Yki&RqX6WMki[nkd.]AamM.l/iGVS.fm;W!uKWT4),;uTDJQ:^"nTR0<+GhZW-L'@]ADNOb]At
+M!iV]A(ZYu+qq>:$m-TkXY'Z4!l0lsB*X_;*K&Ru/rA9"&@s^-beHkNG>"RFR)^?aQ*`@4oU'
+mkL-iQAH$?Sff+e77?cP=d6[E9__U*p$b6r4+GQ,cCoBY-8i5[Q\GuFligGH#LG+$P(JB9:U
+<XMp&JI/.MlX!C1Y@b7QU[s)&^WdhgXR99?<AKj:<@2*KJmMb?XotQU[63\8-lCLq)QNmr@K
+U0r4.bSS`]Ab^inp1WQ5<>kcJ.+NFtqs[bP&0=A8@jIjfG<iUV`.'(X`Y?=9/-JT]A;$rVKKsg
+=ep+p7ic)Dh1Qb1BWrNoZM+$0qb1@\]AH$"$W]A&t#oZoEPlVB9!'/$RE[\WIG85MHS\=LIlhs
+0Zcbpm9Uq=6sq"j[3rQ!QFF-RYEn$p[1]AERpbbD'Y(h)$]A4.CaYE'Z7QYqulrH3f:X(o)*Y$
+\=O>b]A:F`\p&s2ThqOjN=g`8uCZCCBZ=/e;2b1LL[A9)d:*">$E,6mdOEje,2VMu;A25HoX+
+%H'cbH6o=4)Kmm2p2.0G*:?gV1=qIl=TbXrh`"AmnT+8gu!_AiOLJ^t>$$!9cK@J`E$'n2:4
+,Q9TCB4Ms`f>=ha[,4t_k)Yk2T+T?su0A&`ZUK<co?XfTdgR=CNAt7@,8?ma655:2tB'/sI6
+i@`\Q/_n8bcoh'O-Z,-?IH%Mm/cksi\QY"?b:7-Z)]A*Zltj'VX"cU%1SnB62\^<P>NmMT(K[
+AYYpOPJC&'C&F?AcCO2U)<`O-&5/Y?NcM@G1>%_:bqG?h_g/FK'!k-9<FUg/s9H)_gS1m8Ok
+3;jcpH?K_U>qo`\g!aBqDk0KqEXW`kr2$;.*^$k![-uN-:5ir?p>+2hK/06Gl/GWHmr!\PWO
+bJdgEaqpj[B9\K,NULq>s1AQ7VUF+6f_6U6tlTV8B'ATkVX_8Lcpg7hoo*)YU0L$[K3d3Kj,
++-Tpnj]A2P/*YUt#)PkI@8nX+7fq)npr&WsbkiSr(c<9:C@<fON5"a>cGRIt?Vir]A#52n11kW
+)Z4Z'W0;u2$(4fE%T/%-rhHdd&50B';0LBiD&LhKu:27S4Aht71!b0<D#*?rK'5?AjsOW"&^
+eY;MBZS^'PT^GA(5s&_,UEOS=YH1K"qLm^T7iQQ<A4;(&N$!D2H*"?Ja3lI0OCd`GFMnp0#!
+)kRn\3l9,&lW2?LO<J\eY5RCSpqd/:S&#,+p^mZkm"tC\UC(guc@5KnClBemQ*?]AS.Qo+>KQ
+V)%L7ORRA2lq-"ue>2:,^Em;#/8Iai0k8,4ed+#&oTShSr_Zb1I-"8\PD`4>S&F(hWXLNdR\
+''\mYOo?QUT'B_pTOV#&K9'(l<R5k,Ii\Xk06?lg060N?CV;?13J@O1a^'^dH6NLuI!aBu;)
+n)`Um83V)@Ou$$@;@/28t-"j_SViYK`5XMJ;Djdh1a1_%JjD3FR"d^Ab!rKRfK1P.md=o[t\
+b_44"G2!'pE9n9gZFZbpb>=g.&qTa$sh*+h9^N)eUIE+=Q::^D$Z-^(+2$jm_ef.^4s.4K`&
+0J?SIY8NEK,3m7.l5!P6!9j_`.<otVKY13'NFpPSJ[@?bMTufm\fgqGp,mL>n`ijP&1J,qgO
+Iq^jZifu:<CNkeJ\hkFXerB@lC*C.QT_h%\jtHc@.14I?USeR6Z=;;;E_1<bh6<cAWUgC%FR
+s,I[rbeY:JGg$$m.3@Y]A!rG2?k+#*A+>$>\F;"el6NhDV`)c7%"JR&Ynil5uRW7Le]AOmE0D7
+u%mfs.tb8jsB;OFc-Wrhc1n\U_]A,)%/;-pc,ju0`^SGna&2Y3\sc1<DIZ<Lq!)Rr`h^LU3k@
+FWfsR8PSfh#&#f7S^Sr$TDCntVul5U_9*Wp]AMgB?Xkp;pMiL-^NA59JYblEYI=(Tc-G[29P,
+,<h*$^@r[mkjX"t'/WbJ=R)5+-'#*QWSTLL@J#")cmHJu6-"%^iKt]A0cegGK;#*[89,H4Q!S
+g05'"YM!cL]A*p<$Ibk22%YB2Zc20@,K=@e<>YNZT21fQ6$\,I*Af4FV":fF0j/!lSFBe7-gT
+lL"?sZd.E89_Eb/XVnRNC1[&0O.aH'[PN,N@IdH:Xf)]AGkp!gs.qL]Aa'.9bo$mI29bYdMMlk
+F_P)blfk@G54ss54p0/#3k!)?2Y;E[1:[6TLJb<j;Vg0.2q,BLKf1_>K'WS/O1aFA@CM)emt
++h#/Atss([*#Sqs?%,eB%5WUj*,oMBoug&Xf&M5+,-PB4QkM7loT[_@).9fr>86Y_A4i3[Y*
+Y8l!?P\?-9PGWWr@P^K4eX+I'kShc?8>iLOj$/)e\"&H7EVskkF22T?9T/e\.7Rb.Y\#Q]A%%
+]AE]A8K!u:gL=oP)OY$'geKBqK^q')d):Q&0Ep:7=SZMbF_)iGp<GGuZJ0T7AQ)%)=3k7dj\=0
+r?<t;8l,b8^pAfMPJ+Fu-d42\Rh.c.fH)JX2-!B!f(V]AWc4*62m:n+7B^C'eE7-TjKX'13E2
+th@1_J%EQ;-nh6@+U:o[@:Slb]A96Brt6PC(QgZi2]AVL0`0#b^&rnbVCn&n+_.@+NONAO6da3
+0if=2)f?I<Jsj_U(LM([f^J]AA)aghJX/H-X10c7;?qhFqtGQ@WR<]APl^IX'2SfL(ifGLJkCo
+.+1BlW`\bd4*=iCVOCWN"6g(AK\;F]A+Z8KpVVdhQp2d6m^8@'["`=(u*q:(SOgZebmSBLeKM
+qc8a[_@D$]AZiM@WFa'm^"!EBA[YrX08%)>\^<\lulc5dG%ss`6q<aS;;C9LmJIdj_Tt;9e4-
+4^C4:N+C\S8^:`*L=3f_J^*1bs\;j-0+XYdQ3^<%q;Z1f1+jpc;2S"0HX3E]A>o8^5.>'*n+'
+:F`il&tY;d4Nk<'Ca7Af/(5c\-6F%9fP-^-h9:,`p16Gkgm%3[;]A/6oZV74a/1O%)`ZBNq3j
+jH@;T"<&[RhhX.,P%#rD]A=hm9iL_W]AP'??m?!c42IE@2KH4FKH6M7[fV]Ag0`tiNFcq*a!#\J
+:Y=r0Q"rk;l-Ar]As)B@udPeQ'J&Ud$M4jEHh_V^M[eus1'!T-KRh6rap8u=?NE>_KK%u6'0q
+gW`1bBY)$$B:.Ls;<\-3V/aSP$s4h,YSYL-edLi3IKZpQul:X_#7PoslmbH"bqS6AR)V<g/j
+-_KIaRVPs_]A7/"5R&b-]AGn<eR=5o!uJ)4GF=I.iLXp!GrEg8m$+K`5u+4:sJ2cnWH)lgsU3#
+hgnEe'S3%4'V-aU0*,b?fseV&G=8gXitId`OB3^%=1IA[Sd<N@/H:uC<r,As$C=p[-HCK:0V
+,T*D.@D-\\(SM-sV!,s61WEYbqS!Rm)l:iZYT]An;>,=,F_]AQ)P0PnXOdg3?HPBc+]A$`d>oK.
+?>lLdir`sMOI6u8Rp2),jW'p+DWA"j4j=J-Q_3Zp96hj'e`W)8BcXt$]A$i:BaP8-MChWl<15
+aO)QbYN,qQ>PonpeP^pPo3-\_<GGn%EKS>bej'+=rPOC'?)L>>N`"$b2BX6iCBP^e:^VXT.@
+5T-.u?;ms^45h]A1aW'PD!7ka0T`T?mV<R9.tGfi6kJ8ZV1)/_q>"+*I)VK6L==tPaHH2dQZZ
+4.]AknUaha\O@J4Nu[-uBM0-'NRrQ%C/!PYK)#>]AmfW%>L1Ej)"\[S$V[oL$HYBKC"A6J#16!
+sM@AboPdn9/Da*4sYj.4EOHIq&A:F3[-]A`t&Spb>A*ddYJqG<MEkZtqh6/]A>&l*#uGYF$]A\!
+`oO)rqVle5cjoMA1((YA2lW-7s0pi-qF*fqBYde^:s;\TiIH-K]AF&8cr#","d"cG,/92Jj$8
+"t*ou]A8UrXb1fmi]A6W3O;#BF;tF2S!9.f]AmoV)d-(2o,QA5%1YXrBR]Ag=,RZXT6VMsfo\@>I
+3`*)Q#+RSK$kUKBWXNPR2<)9DI$=%`;#BFMs&I[`W0Xii:`3-c#VsE6TW&.2DmUKar:m=mEX
+a!!La[to$B4FT_55dqp[p>/V?OH)(XOi+]A:gAL6I#F.,Tu,A*'Q>QQQ,C4U.s_+NMI+.kF.u
+A.o#Jdd?iJ#K5GPYJe-KBi;8*V*:7.ABnc0$ZRVPcQ9Q6JXL>kW7bBNWV9^;NHr/<%oB0(=P
+Ee6Lo*J"]Ap7lr/:@]AOKY0Tk0\%eI^24?:@qXT>f*CVn!<f=KfB=lb?*.1p>Pr<Ig=YjeC.=P
+`eU4(GB1#TpbYl+1)o`l'4lZ&Hhb0nZ]A;lc(O^KnXEn2W9O-eJSb2reuuIKiT7eqJ@i!r;e:
+^WJ::TqJEQ*5eS_L46b_:8t`ZE)tj8'>7+m!.JnjfZYpoI5b&$Ef6O69"Z`qq'%o9SAKl2EJ
+/T`!&lpS2dCi)M44`lB9&9Z7JH?q7&7Dt7#WA1,2K6_TTYasI*4h4i&j8H/:IbkP[>OHF$6I
+4$&0LS;f(4_DC$C*E@9!ro!RFrWShc<>0[;CJ4/u/J;HPrL`u]A9e8D;ujA2+:0,@"n0&LX.k
+I%E?s@a8?6f<K+PIRNO0$p+Mb,IO'/h2EVO:0ECQhglb6b62J,5CH*Dn*ls,k\C\Y^)^/"[W
+Y6OIIBV4R=-Q.<%OYHNFZVl7b`<+0[SjUgLQ%;mHltP#US(CQ*X!T",k9l/6Z=T`R$5(Q5fp
+;GUTE>S4Um"]A@HET%Ffr<Emf=EY/h$*!9"[*`bGR`C&5D-A+50o(u$STR\'OR@Xe9GG&0X6q
+[]Ada6e5YJ50#)mhf3:X3J.X84>/:T[E@#PQ+H,049OuPf9DK7&V`5ulfYjUrA?.n_6_.Z>Bd
+'Lmgdi=^Ps]AGfT9\;)%/E89dK3n/I=:PR7rWZ2H"PC]A_n0$dAc6NO7s%C1$Pg(eBXRCqdXE.
+.oRJblfQY`qb\JD+fcQpAO>dtKE_:P9<)'C),b6\g':noQ[]A3\QXHcH[Q<f98BVST>q-F5Gh
+&q(/1/!+^\KbD&,c:6^.Fsf%h7eY1H@bSd1+)El15_AdMh\KHQ!#bBm"NsO,F,9N=20]A(2)Z
+#-Odl,SK"FUdZ_\OAqh;fA8`eg[[&0'VIN@4>QYaE>d=-8>J-aLmD7&7N0thjGbIcC;FqNVd
+/g6c%)lg+js_H2r#UHD+[d!`e(-S92H@N&%4%.G!iQYe16f)M*%(UYoh$G*CC)N]A+"Xc4P/Q
+dqJfYD8C=W^SU=5MYci2Yq40oer'Q2Z'V`)h31qo!s?+1/6?H"Y@4F)HK>410IEI\:'L?TpK
+(^Qn.rp$Z/Y4(PAH)kPAL?t&,m?aT4c483'HMdF0!q;)Y.P,`(?XBh[Fq"/S$<b*.a9<#10H
+h%S]A^!MT_ZAoC/";@[/(L9Q`M*knA?\jueVql2s+ro/4tsJnHnWAdm8#u`ksV`2p@73"hP8W
+\rD\nXA?Fs6eB5,cZJ1QbnKG+r&_'iM6WFt`jALfR;lT!#mH(A<&5T5Pe_X`pUO]Ah/-?.=OU
+ceF)nFsiPglJ,5Xb:^,nfrT\5Od[f;NqRm:TQkXZPZIrT?0./BRgDQD`]AMP;7qW\Q!\It-S`
+`2f4pSI"/J8Cr7*OO&-XEr"kDeFc=9X0D7$6<f9h8U_k7ImplHK*&"bn\an21hNP4h)E9k\9
+7e^SGY]A"OL4.2U'cY;!i9KdZ-qIm0tCCsEGr,E5&d6CnbBQQr_mu-4b*SbJult.#)7gb[*-Z
+*9RXgp3d:gp5@?2XS&D>\599LJLT'1o*o)0=[dnHHQLeRsH`d\p[D=tFSug;WgTBdFj[3!pP
++'VhYYgs5T_i1Z3ZiWe+G6lT=Q*U&EIMr0oJp4E0`.u`4(=6nmcVbM8Q1)s[Vh%F;]A;n)HG/
+8GG-[dD,//Lns"(cll&"D$:^U,FKl=]A_gHop#;'EgD!U@'"Qek!jf.-+/hT<nTWA$UUsGZpm
+$`6Gbd'gZ'A6Mr.>`*qS\si!.(AEDns-Ndj-GcS5RbOC`R0j-<c4;QdthHRVH"(Ab3cH`"1u
+jQ!"`O!A,5HW@$#,JD`$A8ficTZW%<NJno!mbBEAU4%io]A!X:tCi*sukiIK,9X^8Q"2WZ,HU
+;u*1b#23bI.*LO8cU8MbaJhY<]AP;jtMef?QQtJ9+8jSQC-6eU0qmW>Ae[de]A28]A^&2XiNmWk
+/<Hd\Zf<sHg6j$9LE2'T&j7siF$$!3%N/h6`BaeJO_oFnD6nt[8_XH-,W$"rJ9PiFmo[_L"4
+:jubL3ocfHKs%*_fZ"5#HWP3fqR5F\k]A$XlGn`Ab8H6D:If]A39f6kd6-?*3r2)jYQmF,bGTp
+':>E,Mk[9Nm5p;3K8Ff[4C^J]AtCdNTq]ADljLl,flF.$\u7.gr3XVILn8ST09p20R(I5Z+`)[
+.ab*1V>@`B.r\.,rK>V"pdI&#mc>*<N-(n3oJNq]AKRmib_6H4U=M'bSWIP@=il8FMRbN!F'#
+Fho?lY]A.?W=AqJm\CQNp!J[T&tF>O<oq1^m;+Mbn3gU>9eb&BoI%?J]A"&24b['p*@bR&fAC%
+C5+$7:<;<i&e%s"bCQALpoGZ9#F^JTeIFEmd)^"QRT'\rOe?-2Q.g_#p9Hpp2b!<#Y![8m7f
+=d\EB)qS5R)Z*2km%pRBjJNIQ0Tb0%\>c1\.Cdq9RJM-fWKB/=MIje[Pnl(]AmW+=cUX2E*4Q
+^&au>b*dN$*dZ.P[!8=\!toerXb;%UKKrOBR6(9Pg`NWhVA_?A;l-<\JUc/tgU6d`N0Pos&c
+<debBn4:nq_7n*LEqNUnZ6>X8bWN,/J=a(d9kcl"o$V75&KaI`,rc_R4T&<RSoiqI(?WbKU^
+'%tO5[0)_?043hF@O9r>F1".&H[iqm>19G9T6LiYE;rPIQR59TQ$I3JS%#jXP;tNg,!(q!+p
+eI7g/P'ok(#N0>qil@&RV7RW:pkp1Z5RkR@Oq_4]Asj=P-HP0o\kcgi-or]ASuiVb`J36Y3FrG
+R-K4#\XN@bq4*gO"sbnK^8[3p=8MJ#BZB,_Yd33W:X=!_&h8^(dBXK">R6HksrBo%Wtqh/":
+F8@cV>TQ`T_kn^&JAr-lZN^;`H,13hJ[5`Oe2W0XtI%1"rfZ*UKjA[E8:DcVMB`haQ[/IJ`'
+INuulo&_oNFl$Nm2;B@e5Ag5Yr!]A=WDnLI7&j%a<.U0m5=Y,;^e3Ipq1BA`AqS78;BYJF=P*
+ANE\L5,.m^PS(A)&ra*N;ETLZ&8nVO1BBen"[#Fh+12!+o7l;jgdBm>&gAP9gWlk9N=s]AV>:
+KPg,Y\FX-^'O!qPDq5*^lB?)W1rIj=G5G'5Noo?_c2#e:'Qh'"GR4"mWA#;@+f?`JC2gH##O
+Op\h$\lBTf8@.d#8b`H8AX/Qga?E8!9Hip#Hh!KSO\YN%_)Ofps_O%j?4WQ>&-5gO_CSHH/f
+E$dFQQ<K!'1$bhF[ga2D0".t`iR"Z6?rjr>&CH'qKbLhC;49?ecRhnF%Xb&d03>4LeUR>)#1
+>FFN:Z^KMpE2$C]A!,@VmEdTpKV`a<k\)/"tJ]AgsjW-^ZA&mA'kLQlN85U($<!VES'Re4p_nI
+:b).tunHH;Eg8DiZEH&#hQkX)r7:dN`@bjT+F>A=\E#Xd#FlT]A6DVAlT+<=337-oirWSgN8G
+ilj:tXa/-Q#Bj?L=Z77j1VhPb2;GAoposABXFJXQ*+B=CspLJh.1,c.[6=GrhR$!EnLP7+Q>
+4h'GU^TSUQ!p;>;*g.!!&;`g]AmL=E\.o&"<ZkR30VS)%N14P`@)?fep@jJ5"TQ4G7[D-%mR&
+*3h):1D\$+g_XVu8kU`]AlnSEe<a;JF'(a^!AQ2aQK)p4/Mr=FA,I"XCW$=G=Qfio/Y,/g<Lg
+ilJ9/>qrVADCn5Dm[VqcjWF*Tr!P\9HXR55;AkBWEEIY^6]Ah0dA$9+,1rac/?0V':A77q>M2
+EcNWekL6AIYlO%fsd_8.:ft`=R*rkhLO&>eq!tE2+bU1NYJF1f@)]A0i+/U11tY'V6t"s?>=m
+IR70[si<9LE=?ZN#pb5jmSGK>+Ee_*j>tfIk)*c-b"q+LL(FH9S(bDmpHtd<pk#Wp]Aj@&\I-
+8YI=XnG1j^mBh<(?JJd,9ZqD"lPj@[b:5pD_Hk#_G$8PdIL#Z<U!LI"t4I[:hWS@q[Y@P?;`
+qpl3D[2\%p%An`rN`%N)X"ZT!.*"l)N]AS+4McO>sa?=EgMC.:=]A(m;?C%pq-LK"sl^-WTWe=
+[/Nt.m$^G)S&m.Q&8%@`HoKW%#8=6iBHC2tHZ<"@KX_h@R`Q!id<7fBO,nM_eEkfqo(I4X"M
+.g#T8MZ)Moo6VXs@FS(O'J)7G5JOkn0fiVmjd8QSjDh`ra[`JLCp.n-NHUW*7Z=d<e5HNoK4
+>Pe$'u"pR"]Ai*LL1C_hb15U$4$B_Cka$Y:,pD2=_]A%7U5L*d#!u'%$h-8`E*[R)`mqLTmuq<
+d_GH<nA_-0;jVDBF\<t6#pa*>6Q?Y5N0Lp[eZb98q(i9,hC?_1/Zo%BJ7uB[p#$ja?=cAi/$
+"E9H8is#;X>_8#fXe#uZt-m.'VeT=UG>!Dr79S'`5&C,S%PjnB[:n!3&bKV&_7'T)gVa_8sU
+1EcuU'6KcQLqcP<OE`f_$I<PoM9ELE5'LGHY[cVaX6.1;GV7jsfYh^2e"guY=haq3&Z'q;"b
+R&!Jia]ANhr=+MX*]A5>n_9e9_j9sE#*Z@Rb1./"3OJU3>!nb)KH$e`eLdGIQfXeC@Q2d>jI/D
+i=9,1gBK#Ih[Q9U1Q!X.7)//^Vri#\?Hu>g7<RCa_dO#I=C6i@C_F06HHH1CTZ%2>Z7+9$S#
+\=F\\j6a4iY"kH"$dU6g;In&95-*T[7"6`[F9Udf36c"G:9?S?I:a!r`SDg+>WR9!i0]Amo2^
+,F+g908ikimTYn7MpN%s/<Tq(doGA;DcVms,m?99Fgh4.1ZQt_Ht0N&dXJX=s"F<(f5p?La$
+G9lMuCbqd"KoPhRdDs:s3Zd;[$FZB"io<J@V#NM)CF@,!C;P>\dtDl?^MSMgP1?)`SLc.0FM
+*S)ml?L:)A#)R/'7YDp%uX#@RRu!`Cs<_JniYiD#g`CMKK)ka/#;+6Es7M0kk2Mp&'`>fcA]A
+>b9m4W'=42>&q>aGrt6-l6A3:eWX\qaIY,9"<cT8[Wa5O#K%bE]AV=pNjJN)ohGI!:0Ge]AuUL
+'*e#7J($7i_=fScg=EQlsS38+;,a$.+ri:s0kXBlYJ>=<k!RKD!q-;54<+tMF1f7=eBo_[-_
+;4]A,ios<h#ACiM=V!c)^n/BLYkVG!d6C!tABW6@+c,@T6Ho@DFM0GB8<p%YGB_.PT4$P@*af
+JT#TV2#I=;(4J5T_5&;QSe:KRpn!6*%e)u`QdBm0O]A0G<:\%]AQL',d@8H\rKi'WG\iHMIF>F
+lA1V8ZGE6ak1LeN/57bZK#e,Z`;/OJE%o$/sne@oh(&L)2[J)*]AbO6=_su/Hq>_)6/ttm'j%
++!!-^i+j!u]A]A1R9Z/s1r<OP.s^rDC\#.ReQ-J)mp8\:u&EaKRV@Bb]A=bM\f*o+2\`fN!VpFh
+mQk50$?E,k?aQ\mg0J@)=EG&J%=/*S".N85O1,LT)GttftStPEqfKaDM=BrP,7rb(KEV5=Bf
+o%-.t]Arcc1-VYIU6]AWL*ViJm]A,WK4"WO]A%@b26VlC'bQ%;5njO<3.qWj4,>[nm*ju6h(#_I,
+5JS:`!R]A-'D>pZH[/Z=h8\@S\?eb5LIsT6u53o_Snp_:>aVgJ[i-k8?A5l7W,VO.fre$s0ek
++7r%kYEkT5(gk874+LT8U+k@A3^B!SRK;NB)$8o69<U`$&Ga=UB_FQ!J1UiGaG^=3@!gC(m)
+O+ENOPKmd^QR&S=F#3]AX\Zm5Ah,@g1`^l=eeQd*"HJR;$&W[fqRL@&,e0WcAErk42.Og3BT"
+R+[N^G9a0;R-Z12RXl$8<_)-h&!2mdfZ`pj`7d\gcP=g&!)_*p[$O4[(PRkEN:L]Ahh?-,ba@
+(qO,Zk,@?:%aZP9u>?>_B0[`S:l>/CXZZ+MH.YT5rGqX.+u[FsMuk2p/b)IN7;4`2pVR)D0r
+<\O"<eTZ4Xrr&UE;;PImZk'FHAX%7<\COn:\Dp#I\f'nE<Uq%NGOP"Ter3"6FYA!i0R^VEOB
+^tRM]AA`&??;A2g",YsZ2&lcL-5$+W9'A$0(&J0KW`8jTDW$#45'$>='*:WbIX@ERUPkRbp>9
+VSp^[)K14$Xeo_oX!^BTl1..uu3MlDR,0;H8!(_S.Z[CNDG#$h9<3Mb*b]A@X$ec'3%9lW)"K
+h%80^S#KLb1b=Ymf-EbmUfs%]ABoun[-fJ[NauVoT;a!efO"0jXbbX/IiB@rSW"T(kJ-D:N3#
+1RqC'F)@ES-?gFE3+1&l/1,<"BJVUqsJ;,.j%:6kW_;o>3qchZdrdR"?O*o7u`cg(jX;7J@p
+<IEB>lugcaI\FYj,3W$UnFO78Qdd8TLL'r.qo\>dEcG'QfCH2[QF\QAX'a8d"6jm0GSdZIg*
++NQFYP]A1ef0,\CRO$@Ncflp#;"/LY*1BYd]AV&cb=u+n'heC:YUJJ-I"Z'>R'a]AKbueehebPg
+,]A7d=&&_V*&iR`[mD;D6'=akt,$L5e-!=Gs/^SG71meMX&pXE$d]A3K@o_:t^5F=!]A`A:+-($
+O4;VRI2,\KMFtShII/R_gFGgIRr93"kg0;n*ckt0m!PEKiNM`RP*PNq/UOhfsR)%q-OuV/nu
+mH_)@]ANAapZn"#'EYZg_^YO?V9+LaTWlqkgI]AIt>\_r&5rOF2YLQ4,X7n:1Usk*WGo"(H@hF
+[B[Vu`rhY>KI&VsjmR.aj0[1#KL+N05X0&U$t)G@f(("b]A<uto@=,;)]AQm;mdBC6i^\03B@i
+r&)LmZW5,@c]ADXE+6=N)Hi4%=4;G[<!Z2]A3paIOZXTNdVbuG(C#a_ilLK#K8h?J8E6pRMGiM
+@j'F.FJu1X1PQ"_j21JbE@FCLT-A=O*ik)\M-8,eLN_LZU6qnoER#NNZdTTdIr&L_iDE1!+c
+M4_8PW`Bt:qa/g'$44!?]AsEYC3MoM7k`[>b^h+.bK+3<EtSKuo]AkV03(q3VWPU=1Y#^,3jP.
+!#YBG+%YFSUmmTsUU^l7C0e#[rEJ+u_`:lfY050:bH[0m;:95Sg_)2aO\<a4]Ah)s/MRCoCAM
+"hHt;JOFQ>T[EW.M),;FBcLF@?7NBA@^_CKins+b.Os1&\R,=(O9[-`G^Zd1M1kE;_q1o40i
+;MAZ`F1-E9*BmKXoX"7:jgoD2]AghD-!glMtD`1GGLm),J5O<JX)_=S:ZC4DSDrZ3u#B0P=mN
+VX9eM]AUl9?LJXoW<"md>d0E#MP*]A%<F3PR(#N+)H&X0_BE-6^8U7\mRa;lu.1"?cEJ_Q&W)0
+"fL>\*b(>YUm=NO,u8=Tm%E1=^LGOrU7X$+`RWo59o]Aq0&HO%gJS?=;RhkSTq9*R<dnH(bth
+=1Ef&k-,8*MiGlN1;C<#&6:!TND"ep\-I(+Bh.l&g>\o5(Cr*'qf$IcT^q'kJQ^U$-1HOn#9
+n"fgg[lcmlF4iC]Ah6mL=D3gdPKE+^=!q9o#>,%R;jOVH[G]A+BEFih$mA>>^lWX`bl"#O2PQ=
+=`o<CE@B<a<Yd2?)WR3NYA;M"nXIBQ^l'!`8r*"1u1?7G!N<TcEMjHJim:H)mC$D&<uk-au:
+-/D80@[*S&%48iEOi""?P$A\q(<"44RjdH.u0g80]AmSjpsI*H]AnLpuNu^_*c$Si8]A^9(1W6]A
+[NS/DRDXC68*PMop(PHlUqoCC'a@RTNWCpBL"q=kTa54G>,$;0KLE/ga)B<F8n:Y(MGZZgS$
+cZ_BUDFF$.?(ft1P0TLI<UHc.pSV(m1obbtLB*_dor+s4&_n9CiQ;A2>;p66q!4QHu7[e8=P
+G-+2Pi;!t]A#AD\r@K4n<7>nO??[NQRl\us/Lu5(JD)!B3NFC>^ooV?=?pJ_:d=(=dhteirQ!
+Wl!G\pTZR5iHf^=4sPTLD)H[0QhfXu-RqKEGpI!gZG^o*"E4hmBt0&iu:?nF[KRNWe#jk]AN*
+&<dXXjGK&.LDt"TdR\e4]AKUU(Z#L#heROD)"bRT)HP2TpT<6U\%M5NF9^R`Zs9fN/Z["YC$M
+0j(i*oj(5'G(h'Ume^$J926jAY8#H?/7)*AQO'aSDS@k&R-k$<(7OG<[G()=6r%"r@Qp^#[\
+T\\\#AsSf@9<("-pGiXn+U\t@9_>q7#*g#94.[:Bl-J90i%1Lm`c70HXT-$'>l`4@TLA&?)R
+_k+il%05r1<&hZO&\s%jjE^\kI2.d<=no<NQVVC)Zf:g'm+G1(YAn',S$ISR,NV"',+t^hq6
+[)1fA\/hEVE5f?,'_(+nUt*Obh2+$-\t.VtRj+k$06j<1p[I_edJVa1D\JmFc>G2j@X>NN.l
+7Su,[hefDrlh@\bY>Npt/Wtl%fWS?VLBQeHUB_P)KmN%532l[h!f&Nf=i5GA)X=r/;eP4!&Z
+MODX5tKT!/oH[#:gtao[k1@FI6+.7,Sk]AM-:X'iEOmr/M>koB^L80)2@eZb;Si^=R);8#I]AT
+r-gF"q8g6ET3?IU@)&VN*GQ!@XWpo>)9A;BbEr?VFMj1d1;n!o+5=2%7Jh(upJSD"ID^:SAH
+J5/Go4%?9Z!'Vnp1H43Z:D?l/Bm<$K!Ant2:=26RI@X^Z23'%r(4CaJ7`5dN.HOmJ;6uABgl
+Rj.Yb=/#0'I24(p0A$JZmZC03TRTSMsVTkYe6\@]AK!Z>B-IE9F/AI\D5ntqMIBnp=Y0r(Yt>
+Hc1<4U2A+oQ3mk<:<4fI(i2N&D,RJAB,EQK?@d3qsj+2,2;VR^uMi%uuHp9Tm"!M,V&o-=rg
+V9"gb#3*EARnsBf^Wo5i;p8</ZJ$-;gfQdg@A\Fp1af6!k^6*:)>D1at#a=mPd1SNE6g)@L?
+HkA`f-Uog#OH8,C`DaI%<FOs6s0qn8A2/oh`JN@mG8Gn;'_Wfh]AjDDnlgEuGrR6smNOZAejD
+aY5E([bF/fOlM6b^4[@qjabjd!rLV[U9i"*kV3t5(pe?Z+ld=\7pW_n#G":a'_67`_Qb$=Ri
+R)E6SioZ[;F4d=EXYTMc42/_I:2Rl`5=/0No23-IB!&R?QpLaRDA>A=6Kj#p%]A[(;LIA>:uH
+^qh1!u7o/lsDW#l&c#i3>!!A+9N?8"okl'X)Z.0AOatmm-DE\PGIj-iG=_QC7M;?0<,9U$oS
+#enUHV=V:0>%+A8(?V?jigA@p_iUE"HS*skS#lYO6VZ)hkogqee$i@HI,cdNYSlF`Thh[Oh@
+E_0o018&T8>_,cn;s>*A0reB!nEc[P3(?GpY=@SH-/a^q4H1jR,*?hWAjXRjb6:H3>$?8Gqt
+[W<g:VA3aG*C'`S#/.`qG7nCT^!ojO1WED"s.pOX8fB5fXVn*s`E2YA9>$nHJ8%m<*n:\h?c
+8I`o6"G1_\m8T^rf=tc=q!)igA#N2DZ4<W=."@l#h<Wc=t);!(hfr:k)8iA=Aei8?NX63jKM
+\I7DqJC8HQ.kRo*2_KDgg>G$=(0i*Qt260^pd\"39?\f.LX<'bDhun`9V%t[!9-+BV_5^TI5
+SpOC;YO5YAKaY>mh1+Fe)?rC0)UFI+O#_dFiTUT))=BVF1mD(a+?d/?WMXe.m`=2g\LJ13J0
+T^S&F"LTEHrd+^`Y/quK3;Y4Fl<9i$b7bl-I5B%$FAK!pSe*nk=,I@3,o5VF'TdV[_e\Qo"U
+#Gc4<DJJGZYa49O[*KfV.H+Rd-FQ)'A_:aPn:^#@YpdO+=odpsC^)Q=W-d&tL&\jdV$[\"Q`
+kbf<5CF4R,P)0>S*]A1l#kg8T:#]Akb*^5fL\og/'F:X_\Gp[Lf7D6d'uarN6AJV\);A>/&[BW
+%biYP0P*%'Q\b:3?=4Ngoim#l@5hlNp@<7@LKd1e;68";eZl&_.n8&k[8YKh:3TEbH9_Lr=Z
+^$LG?67Yb7:_/E$!*Ae:8a0[E8$8\7sho02M$\tDOi9B7JCQA^[g]A?[#ZTQf$)-"gr.$FSN4
+@uKgBEATX0io/)5G,Xql?r.qV=?T<PG[mHJBCBshiJE-Mg1STCrQ#7E%(rR^cU$G7jD`2_@)
+rTC<+KBGQpmXtrO?I=%=?u;ta%`H0/">'7B!:u32"&GtLXO7]Ae.a+944b_]A0:;)03B3p?!E`
+J$!^rgiK$64t"S.YK60>D3TNn9WW$8hY,:3\E]AE*TL3O>o.j/7'`EUrl^SK?q)F=Z'QGQX24
+ld_O-HjW.]AN)5"u[G\EArp;V3Q+`K?rXIjVQ@Lq::AcupU</"/*-?/gECK,)A0Won.%6Jdr#
+'n,lGT+6_7+t%`N<9FL"-sEB7K_rJCd-NgSiV8i:Y8E@_JSh\c7a0=rUXeNP">\&gmF>iRgS
+lfV9QWFH'C;,=*,-$l\)hA%V]A0ETTlo<A,L)*e7D>1MGA2Zfh%ejhEr<l7C_)1b/0!tZ"'t'
+,D1;g:LGWo;-20-)nDOOYG;%d=_'6[qjVnU*38Ss2X@*sgNjRCe-2RMjO#crA%,M-_=,`r<N
+._r'1Eo6--<9h5S`2F)Q3Hu`d;^iEl(SPFQ^lXOfVXS1%V5?L!m*]A_>L'4_S:`^^MP-X:C6L
+D+*8LPFfqa!3@O9#AHT,r3LD+Tn%i;<9))4Z6bZ=5:iUj.n"f/jg)+W:md\INSfa?<2/_l,_
+(VPU_abjsTC(k]A'G6=_\1GZJlG^,PN`pHK:062Oj/H\3,L<d.PH:SHCC1=MneVR6SGrgMR.K
+#W,5pMQWCbuRmLAmpJ7.dNM"oJg#B@Aad]Af1ta-aE3b]A+e1=3<JEo1tLlQ`up`G'DOoWOWXK
+hR!ZZJnoK`gmTL79q=3?`m,XbQCp"bj9m%-d*\8_9QMleb.7//qqbrcP!`@O'q$`p4bdCLio
+CSW(YMYHJD.F83k.sojPGCPO\0A!lnV\&0?$uWGS6,VQE?=&.-Og_fO.IGs+[AG(@&=C+Jp\
+J1XSmbGp`:gaH->n\N<WBkHegLlX\uQQe9\QhcT$T+.FU@qAkY8]AruF%f9d_rW)rb<LAE_e=
+Sfs#=j9!'LlTVsEo#*&qYp0EWY<.2q]A?/3q.S8c$0Mo>P6B1kCi!pkO)\kHYFp!iNY^oR)KU
+,,S]AkK@M6_H`!mf4XIIX+`DeU=WgM(:]AN`pe%C&-BNrcme,<<m`4bN2o(ZGW:mJP]AA"]AAlAu
+9SZdMeOT124nFDD$epRHhR.ToaB3TdE,m!=VIG_WEifT1G&Xe^mG^#\[H[G;WmT*lXP+Zli@
+Lgb<iF1RgJI(MG;Af3=Ynodg+5`)Sgm-<DJ3O?.tE0B7W&Y)AMZQ5oDAYTQS=J2oZnjFBN`[
+I!uK?F>L'j05GbX,#,!*JpHYRQIQ6dhDQL@Dh3WpMGi/]A4G(JR4TI%*dMVnuTg8/NG9+S-<g
+\+`eVe?M'iUj#)-ea>`GH$.l1&l=#j$SD:;O[A=$D7<;383N%4a:Fs^4UhO8$(j;]A0It<3')
+/[j$A=kh=POa\281:Q=2uaM#-/s`H0;/%NtM^8,(%[+s([=G#&M5;E^"5oI.6&3RNl"o[;1e
+IG>n?""s*41aXdK%.e%@fEmAA&@`b<nc@<*/hCt8;'!h[m(T>mMBgRB;1t$+>\eUi*eB*0XH
+0s#DFROa'.>[%d';:]AmSIl.Z%&nG(ZR`'q)^]AUAbH7t#sArZpFnmt:SE3MN[7m8JZ7rnf")k
+=,NeHI:/S.!hY%nVoSJF:@g(qjn2)Z-Y7'?VMe^)D/l:8j9:OO&BO$Q_^oZ6Z0)&]ASIp6V\@
+*4g=mD!P+>YS!WA8AC-^X.Ua*Bh+2pnb?o>QgGa61f37k`p0"R,cdc1u;j[72]A76*JRQ2Gid
+b3OCCdp`913C9eF2D1FEO5=da#81k?d!8Y/GOfS3aAbX-^J!LBuSlArV7baaIQ=)bCI_cu4N
+j'$F[jN#=<)f_=dh#rQ2Sd4-%;.ZD#oV1M+'?.o"3k^j4j\XE4W=FCl1kI-4=#9S.;%0JRSV
+lPG+]A.Y%X`LL;<1WgS)ta#,:lsRfRB;,55!X>Y]Ad/VdK1S]Ae6XXos;;2FmaCt73NEAeq5VbL
+;7`'Qj'I+f*X8,"`eiqBhoWD!Ybo=*,$LV)LoHX`qi<BbkFrLS6/A@;U]A(cgMn\]AX]AU"H:ej
+`)uT6gTQu#2mI^0b.o)4n8uS3))$#'Ee]AE`R=F\'BLn9aECc<FGH/'PI(t/MD,E7f>m-SkfJ
+a"7YQ/$_Xl-bb!A#oiA/Zo&[AYQiRFLpj*j:H0\9mBW7c]AKE%TUZ(B!)#1GQ]A%286).4g1:#
+AsZ4HOPHsumj.fSWT7#;m43r.kSXMX'JF'CN>YMLPSIlm]AJkrC(n,4<*#"g*(gd1kB3*kfiF
+mS)b03ZZ'CF#OZjR`7.\(.a#"eOU>3*CZYmX+.DmTZCe;*/A%jj5_f<=.VA84tKo*B2#<s_D
+?"2khuKqYMo0TA_*(arn>86tksm2u[u^s]Ah"D1(Pg:Ci?8;sYP$e)bQS-&$-`r45m\DDc7UK
+cN@"rIYR=eXcF1na_k"`ngeKAXk8+*E&`>4LQoVcu.s\JZ7!mgFIrM-gtCQKH"S^7Yja]A"N!
+6jdr_X^nVA"[-oV3Qg1`#\.Jf23r+g<D>:9t?h4&=u('^Pn]AK,V+UZ8!DH"=e2"@P>QL&5b2
+;6T4Qn*b=6N-0O@&dJu2qR$2H_s(eO?%-=oVPoiR)N`9GrQmULTN<+VG3Z&PiF\ojQ[kAumU
+.`hJ]A$gSruQ#Ze]AhN]AUGRo28l<S8UeRPP5HA2[')]A`U2hWuLlM.q&<!,r/d[sq-]Aig8D6`D.
+%bnXYW%CtGeOg<`?cr&25'tWN@$u8?<0W>^QMmIG+M4>6*b+^2`G*#3liHjfLp='[_!@YJ/,
+.OA4fMT-@Xk\$p:GeC\L)M.@qj4ZBBIPV/7u3m2I/00/G]Ad^p]A6/LK[;e*s$nb`F10eZs<fU
+u9(,q>E9/d]A3<f*&jGp?#'Uf?Z8/d8Q1D-NBh`1N5YZCO:m"qbr&c;t6AL[r5k05nK)M&tm<
+9?(HYaCTJPVO"cL7`eqV)4]A"9V`qWTNV=DDGb5c`e?KQW=)T^Gfb0!=p=EfSkSbK-Dd]ADc(Z
+'i:?^qA]A$EN<h?lREN$Y5kL33qtV0>08j?%]A<iF?k@\8<$0^]AGMB(A%)=^9-SYn/QPh^@@kR
+fhj;l;YLMKfOC2$\3!,MD0^UpS33Ya?VghFm"'39+QfE4u22MS&[_Ru6p:F9<Hs=2p9&H6?a
+CH;sTju&`X%39em3e.)h.#=D23`f2Ztt/gGO9E^E?uO;4&O?\HuaMsM!HQu9D_+_kS;_1`dk
+-PrmVo;Hk5o7g>o1$`e.:2SdD\\JVB>p;E0O^+(%`Dr\ASd=N.'^?H2A.o/eb6q?-:Xc?o)(
+k_q01V]AT5P&RQM0cJgp`cM*L;CQ'I<n;?4Ig0s]A^M:RTd?4_TJbGgtNG:j$^Fk``^@WNioEU
+2`>'*KOGot[C`Wa";(I41lM[+>@rPL*FEJ+n%X<9X.8Lg\oLEXiO8BbA&B]A3_NO9jt4^_!@U
+>\)G/%cR<1'GeaC[i,Zj5aA:@if*K;dY+?9?[3Es/=dWZc,(>cm,WS]A&VYr#XeYfAU@t>kY"
+Q?$;A=mlodCN,V?A4'BM>&od?d,Nn;;DVN/HH2)'R)rK+NQe'i]Ad,Jh'`*)gE2;KTXOL$U$(
+2t6IU-0cPHX8:1=AV)Xqp('WiV0JkQ2Jlgh5giMUJM"2f-eQarC`=5M8A9.XebbdN&/2J73m
+IBT]A`1,e)"YV%`uqg%um)=@i3WS7MUn]AFsR:ma;95[OY\0(%uC8\'M+2::QQc/uof,f"*uK'
+^DQ5(bd;<bqYV%W-=a*bo/,iu8:TJ16`(S;1ak?,f"LE*<sCTujnkZu$EmGqF-M@3Y0\_CMu
+[e@e]A8i<K.a:DbQ\j#r7qi?>\]A7L;)>JdGp4!Z@Iu9ZA3FCD>+k7>0@9#&_759>H"Vfum&_7
+2YI2dc?&6_9%bh8(Mps+T0g%,PNQ)@<8GXgR?&7Oq%9eW&0e-hU.UPl:l->1Oo8fe8(5\E^F
+234aC-@?TfEh4/<I1fbl>p@itYhLk0O,jQb7T`'<mpK*Q\f7o2*WiN`7.aJ.p"=I:kklB;ZF
+U#pXc*DB1n:2oSLePXuR%fTX;lK3>^>U8]AZGA6eZ9PkR$A<:\CI@tV]A%4Ah%cpq'2-!bSKi4
+&0M^>oeLqKS.^ZK6GLARqXYXdZ5leG6]A#Y./0T6;Y[RQ6qPe\+V_ODBq'5GmtN"W+XqXYj`=
+7<5PZsSg9=*Lr6_.Xh()Dj\Sr%F=JRT,qI9dNt^M0c4$BDDogf6PdkH@6s\0[qkj(s&ihE6k
+1)G_c#f2X*_f0bH!K.^haMR&k-nfO7FPH=)gA=#qs>V,J/M^<*1ik3:4JZ$#Zsbua`O=.8_r
+e.%)#^J'(?Kr4a"3TYNfj0+tGoN\knJae6]A>;235ZR#,i")_LPj<#C-sBN(9TI#q-68:QWni
+C5&5G8hj#%$Y&&p6"NX@%50RAjPFhG,rE@qHmW3D)1%0oSUR&4S3C3ZOrm.8HeeFb*p))F:d
+9lHd*)s4[@;lOAp)j=)#?c;I-7Z.gERC(k6N0bq&+T[N`#"#LJLA^:EduVbgioD,!9)'[>M0
+"_V%d.aO+bgY['i]A/V&U^VGCuj(0BS\XI;J%m+8Xo1Q\0LkGeaMlNT\Kl1iLP]AKf"T.$"<&D
+E%]A1f&ZlT%3Y?+_=MA,EtCCXJIsm%iu_3;\JI8<Wg@%5[&5D5hK#JN0F%Z6Q$jpB7ur[)]A]AF
+[nbMc"t_<\ae]AD:IN_,G;bg>Ip)JP6>(!jAQ\e2'Y+"45i&RKLpDbonS8iAu+]Ad'#/^]AD=&O
+Q[rY+HO`nPMIa9:@b*===I5!(oY8&5dsFlem8\2I`18p=Y536IQ+&Q`8*V;knL4aa46s,+$!
+j0&JpLF94T[O-3;2is,f4CX9Q_s:]AWP7I\<o[IWc*"rY1G+@,eOtiR=@[h6ObuLT,5=k8.In
+DQ+@3m(b)r*B&ftgjS#8DLnj*ri)_d,XY!]Ach7b2a-"oOdO<Q5oJh,-lHN2:gCa`uL2.1Q+2
+IIjjIg>rD1EO_9=;X)PNZE49j%5lhb:fk5$Iqspe`(nHgn6kMGbJ5pfpaT9?g:@*'n?QdH<c
+.SXuAKT4el22U*hBL%Yhd-*fXZoL10O3ih7uU<bUoek8i\`TgEhnk=DB4eg3s&i`isQA(=+T
+Tf4`^6W(>3=m/LAX^B.fLgJjQ:^)h\6?OiiL*J@2@]AmWcE(^7"efFkq^VMON'1ElfOH>kj0d
+4[jQTdQ(CaOl6eIgrtO!t]Ae?dV\S./+lW=Ha)pf^<)iA"NFnAFq!\/#-lnXd:a4:b!5XbS:<
+s(M?KJ)]A&s->Q8$cWXp#?A'l(`G4+06Xt=`kq&!"PrfoN!`gb+43Z*"?H^V>t)?eqM@WZ!m*
+r90QgU8Hg]A;2@4*WnWGpsasJ?'Q<M8ufbujN%?:^<PP<=_d7O="4eT$&+4L<oR2_GS9*(66J
+8WejZQEZc6DfWV<0Joc>gI?]Ao,^e?SLgZsFnTMHCC5j.fT0Z4g*6(8T)RNNNMF-0AnMYLm?t
+Cl6J"kS;^$gkBpibp]AHb:5E0UgCA*b<5=X(W6!ch0T5&l"uEIpKK0Nmk)Jl]Ae9skn%W*_tEg
+X6X=KCu8]A%O0RR3!T9.-\XJh.WbA+rZKnXJXSHXjq4Q[aeg!/t;JnL(6lue_$YMQlj,koch+
+IYV/HEDP#aJ[?Gg%Tp3#;oMg9;S9dT,$30+#R,)EE8qI'eSij.-^,/fDO%sT6Prl^)U.?eqp
+a07uqCnbG,=/b]A0_AK@rYFdbp#G9C3gk6TNOk-_GJD;(7hoojr[tj\b4UHF%$"m&EAdLS@?)
+:7c6:CBqnNGf#+2QJ4IUf]AJc=bN`sKpYl2Z:lUGqW*\<j0HFm8jP3XFnD/U?'D#!FiQGsA^O
+b*Z#A0fjaK>2ZCu%8Yp6=V"AuHnPa.[sCiEFWI;!2fm/k1"U!t0Bagb=O"t"2o^Rj_NdEXjo
+'9rh)=PV*t%a66nB1$GU=;ql``<'G"g]Ai;Zi3Z;4umV=WaMg*:E0l+o6d."+Oo7]Apt?mL@=:
+%0$Mo<1LE[%1oL2"JB0#@n;W\k(_;Cm>V_5G06c`Q;PQ_!Q_4r<RdF(CL40'4Xegm6E0X+C*
+(NUp,I2oE[D)P'(dj1"2&soV%F'&p:i"$\YP:X*%#4d98eeGIG:J<+@V4iX^D0:AnOcUE:g]A
+9eqT?Lkjm,a-Wi-dp/Dr@>$pILq/>g0Z;C5gPjiYL-_[n&llB]A&TU=n+H2)>V0rYIA+9`B;,
+N"rnS%UgX#rD*-Ci^:E)E#K5:73I'PDM^1,ff-k_B)Y,\:rJ2B_p-ZsK;^*:;"G.i>Pk*elX
+gnZV3fc="H/g<<[oDY/+1AX8L0Y=hC$*SWiDR<N=YME7qqodqN1SL,+7XKkKV(DnXn2e"`XB
+VR@FEo[58@R"j$K.9+fS$)+6cFdueW;0Pc4?.r.g08!0UaX?C[Qg,3e'bR2"HefXSJH&H7'F
+K(E&4O#aIqqGlJ(HE4LUj9/U!ab(p$em)o!"J/#M$9NVMdIZKc]A]AAd9e&YF&W6ZMMqa(A`BS
+mmrXEp5iTFKm/<+";,"nl+J!of.FRd(,=g9BA81(mTPiF!^Q->+ZKGXE@nbm(>&WjYj'XX8I
+)JTr,kh(Was8C'TM;$?.LhgA$T0epVa6*6"6PBn!]A*K<eX_DJcDjUmU]Ap;p/OW(g!HRCC(PM
+nXEZ"bU\ZhXHR1<<&W0+kFG1f*/YNktR+;Q!^+J79+q]A"i\BUi$6=UUa1jVU9"nBEuaacbQ9
+0QMRu2I0-,8DpDd#m(E3T:0MXf!_@pY1"'dhBOa3u*2+AS!^>QeZd2"M;o>q0K]A>%toSYe3*
+*)@s57kqH7*<T#3'$b"TChBoLJKt!akkp(D@*!55::.0gG"2R>o>YZqPZV#,J,C;)AU/nbD5
+*CKB?'#W`r_+]Aj0j4ci!*Q#-/4aVaPY>PBbbe9C_<4B<K+TV6G'eNSf4hj7fGQIm:+6RP=Q@
+j2r_cI'P;F2e0,>!$2u)j-&AnJ#_H$F2Qsb_l5g/qtLYH:LZ<:Bd@$u/Zd70/hDeNM^XWn^6
+ANf01ug<9/(d6X*%T.rB]A#Mp[@\OXp*:Sf9BJ^qi*B4%@Hss9n;K`rY01gs3ohi7l>F3qtaI
+#<\'fE(6p&O8-MF%!)Xm"!t,A?&J5TdVur5WAIK+mFTM^m'dBCa"XHD;aufm0!YH\O@@gAQ$
+mC:S+Tu[RGkZft[e7>cDnWQif([a,nHZ/-DR.UAqu4mtkPY&B')\?Y]AlppdZ*?rGTBe-VRo!
+Hu7;.5Cf^tqsd^k/5mB@2!'/lJf*T,n0OcS-nK)&:YC.a3D_4%bE<MRY"jMMJ0NJbk0p)*s1
+$;S5n3E=]Ae:IHeZ]AU/gp^G@O[5O8?Pg<)TMh_[dNP0`PcbC\jQA?ReOZ[g8pbU6,.P-$>t7#
+"k;MC-U[13S5lo`<P@\7)D[$o<9b\@_e2Y23hA>'lePq8-muk1dSgcDr:3b2p2_U8i9U9#XF
+3[(Jp>-=e;<(]A$9e#:o?u;0>u3KWMtXZY6&=a2N)"!_PS5-VK1h*<2E9QBYp#?F=B:?r3?,'
+VmaN2,;*CVhD]AsBOkVM0GAcML+'ib=`mIY/Gl/>ng6'b#OuA>dZF<V^.Str@r]A8U1#UorN5>
+8OIS-eYV'`*M2bL&#jU.$6o.(g%5Eq/a"uAZATZe3VmEM_&%O95C#s)B[<KFhMg\0n8/BM_?
+i[CYMU<-G:GAQ'W#M?P7eWAonI[pd>7lZbD(?-geMbo$fQp"`V3A.^:9)78[P/.-&s%Z4f`B
+<;85/>H@+J1`(TGs)<H&I$!>d"8E;3<TXJ"lFTDt+IOr2cjBG91,U]A/Sb:(".XU]APW<5BK[u
+YIkI"E8BkApG[$(/n1r&@'IU754iD!''S;X^lDJQ_2lQ\&^Mu,!b\0mk3>3RrEsoJ/cXsV9p
+/(L0#Gc3flGg#mfJLu#'tTk`O4R-b7YqpB_T#$Tft]AacER_HhZ^gNsAL/=POVms]AWhJfE\[d
+GMhR2$<f<,ntZ7V3`e%K'^$&@:Q_BFK_!7ag4,O$-[5s%ME:+8QsaBdR8R\&/Xmgd3Vhi3f?
+]A:iUZX::!s:]Aqr."09cIm%$TlF>;nn*^IN!).G)+'%?MomQ?OBVrAI9E2TMFWq%Z.oDQDX5)
+!O#Q?V0hb&nU5Z&<fAc7-///3EA*FsceIGJ#cfCPt>4TTb!%(q[O?+I#A$`^UVBp'?D?]AlM5
+<=AH+jag+ilL/H3S*+"`R'q@p[]AQHp*#"@ka%SNHQK25Y>*^Gqko^-elPYDkeiR%j>U,&"LC
+=&Jqs.cK?dSuf!/Ne9&htj+.mW/KHm$pft*gKoXlKI>rs""Z<fIS[&WOjb(J,*j%U5PM3NGt
+tX1W\4bnEd^If'`nKkMh8!TnTR5Tn'cAbk:s:"=k/m'W2<&0@nZ([kR1oasXO;T(@!t4&&m2
+cYmWuR@;NZF_ZA%Ib6)/00uKoe?$&@d_HdGkea[<E\&=^.S,fo@UASJ/&_PhDS&Y7A-CuonI
+[m^LEl2<C<5(:YIur'hfB.(]AHEj4;$dh8?[n/oR`QQAWY()%fVK[,E0PZr0rZub#`qk=N7`s
+28`,6\D=?>n`3Q?.2`.*'g544rUOA+P]AM9aukaXb:iQ's@N,r0)2=0*jST/2I,Y]ADC4,uf$4
+15SQT9c%S_=d79ot>N,@*SG:fp9uVp_D.35I4OQDEd6kTH%VUN`f0o7\V6]A+r5X+GTC:'bdE
+9(2s,5<XBA'fh#V1"S(tt"X?_Yl0i'a$*"8F.(oN=r0-N>@'uf=+C(oeS?E_#XSNo8kF_.N6
+_D\IdZUiP*i#["8'?9I-j=u4Xgj9Fa-rb6tqoh1#?Z;[?jXB_\l?'Y3]A8CaICC)Wn)fMJ9GL
+(^d"Y7>)*Q+@)gX\N/bG0.kO'q.K3qOKX=9^E1b[s6%(6]AbAZ<f8-%q9lCkQq=2B'3Oj6nLJ
+@s3lULc?L)=bEfVD;Jq=`=M3cqTr>2AoVq)LnC[ethI!I\pBMPQ?C['jIceZ=pknOk`".9cX
+d6,i*?iF=0Gabh#nGjWb.d?h>bRR=7X('%f^qp1c&#_RE6/-5d!4[1n2Z<JWs=D%cm&bH;fL
+hknXBqP6EDP`V\Rb=6FBBlat=pf1jP%R+F5&d53k;]Ae1bNbJ+XZP/R)B*\1`"L8)*8R[*]ALf
+95!;Q='Wil<q@?_0C)JcnC%l:.$u'1Lhq]AHg,Nfb?$)b^MtuFXX67W-MIOE,3/$iSQOi1+Q@
+h'gPKN-I=1B"09rFkAP?^c3+(b\%>7T8++[Y8`HMZ>SbXDFn7^c_?'n`&,3L,:HAgE_4+Wl8
+DjUII2\%/5Iq"af&A8b`rZn7<<i\bNA/e1lF9?5O:&8H<8/QRI!b#s=TR`gc.e)fU_j+-m1+
+4_\IOk]ACWs7WeeN4?e@GNg'O5I\Otq[!)2ZAsftCHD3175+:XAtCE(LrlUX+?.V@i-sA&:L_
+E_h;B+I-J!"S$tVQ5\oq6"#r!T.jbYW_&VX[%ZX]AatKHMsR>kZ6BjO,8_P2-L`#BPd75m&GP
+_;rIQeW$hHgEE#qZ38;`C)sZVo/Lpi1pI2]A\nEX`=M[:lbpBac4ghUB<pe[njELUJ4Z)f*Uu
+/N,rt72X(;0EmV[^SP&j6AGDL&&.MB>Z;=^n5W5CL-[Sbj$%VBpUqmVFHl`Gq``r;Jrlh%rg
+2Jd@I6ri.<mG`JN;Xg4&]AY2*"TWV`n"&iq>BQ./"]AWsnXV"u6^@\7`)]A&dnET\E<OV-cd:AI
+*8BB+D3\;]AO0H;c[%!Fd?Rb<#ss?,:D&JKgIc"@b3?4TZW>%SQ^;88M[OP,0hZPCkpW<;ND=
+n6p+(gkg<E)[CT*JO1fjkN$I7rshkKDZ-2Z*MU%?2]AE[\B*\A7W7Xp5lY]AhiUCcZ`YPqrRLq
+RM4Q5I&k6u?#mdT9VPT7V^/O4#<k\rOOAsEGsV`G2rEppD=5^GWTSF>A$@BKF`-;_p,#3G^U
+sio=L(^^"l[ocAGZm))=\O%Bc2r?91D]A6aG]AG+pi:rqVZ!MieOIL+=!%CXs'lcg*'+E)rSiH
+VnqKm`d`hH1FK#AsgI]AD@R(nNre^R5Y]A7=3X;_.p*!R8\WhA%q93\uht%O&VJ#244aLRY)t%
+WA`Geo,e*I"_6>E:AJ99J@nAi6t`^(L]A<cZiZimJXO&>0ZU5POs1E6Y[lF;Sk&,6RmkH<2eq
+,u3L4oHdgc!7C/1*MIAd8+#k)L:D6FB`09250<LpIm*(%k:Ip%[h'n>)\kb(:)G,k\B-Z0Cc
+bT?uf1nG)r\N5[,V5A<,7/DtBB2U%$4a$<=LNk\.mD8UrpJk(m1OXIcl$E#lqD^RbMHH!N'A
+qf\9sHB'<CJXDb/HYUe+T1h)r/_(E,h>eWbQE?#_P,BNn'*_5fY5GmdMK8i9]Aaaa"fsbQBJ2
+CT)eBVrC*`p+GAMKf]A9Ud>5QPNJ%DV6a2&P;8l"Mj-+@'</r,uYUlLj,^Kdp>"[5?J57_?]AJ
+UO;7*2Ht-p#r230b,)0'\Ji:J5Z-6m#WI>pJ;:CgS6oT5X*o+g&d48`:L=PR6(K1:G[=%UI6
+):gk5X%+?4Wf9=1)1:#Q.*W9*VRdV%Q2+7"(TrSu.6KsuU+Qn%_<m:M\?_Lr(JL;m9rcK%7/
+FTpNh0>irbBHB)(4`sE)Xroh-o\8s>'^DO4bm:^1oG]A.$n\D:'[WFmqc0D^+O7"LXq>+)5iO
+!:(11HSRk]AKVk71^ni;T-Q5Ao)FX6;b`e/s5@oYEUOuXU4Efre4oU@O+AOK^ku1/M(f_@#GK
+9M`[&NS6_/L=>o!7'JmumI]A7]AIL8boIRXC8N<hM)0P-Yl>l_V:dJDkL4k?KmrDDKm_Eki<I&
+f%g@Rg;qEa_.rqP%T?%JJ<+&#i#DW#<VDB^Gm.HSd-T'!L%AT#hm)"MZYarE_6e/1Z;='Oc0
+,BClOHqNp,r+Z2N+7[3o,fai:Amm)PXql;uHble)b/iuJnK#f08_qA!><Mfc"o[KM=!n-=b:
+XA<0UHBsVtLR:$g&/f$Y[7#;43@1#b-pR%f2NkeMSG(?`0%L^$r"AKj_kZ6(^s.0:#[FNn3#
+$d]Ae9g7\IN(JP".+X(THfo#Ms/QU?:QIDRo]AiJ,[\"2M%pcRL-<Jcn[@ijaud;r`j[EG)5"V
+=5:&933i./Sn%eFdK1W9kCOhMU")u]Auk^O\$X2b$p1[df(G:9+I)1<6\;kQ/beNE\cf)*[DV
+:da1IbS_4K2kn2<eD:^mp<p8LOmWiVZdu!MJu;^1MrqWC!f`lLUC@%3gQ"7,7`jgp#QiXT/:
+X`PrQB1*RapmP!<(&F)b]A#9\^E8qGQQ&,CLld:ce*^2Q<[6<S,hqMOCnZ'QqnBV0oK*=*%c0
+pC'ci$HAFN%kT@><JtA/f<oFbQ&I*`?:1f6l).J1_W`WML9b^T)\p/b&M2kGdd]A@VZ665T!?
+Y/;`Y;hP!#NfiIS)IPO%IMkH>bN\rq!/t8cu5e/NP%D*Q0XP,W<h>TXm]A1Cc>n%aA*!B)hW^
+)`Juk57h1qd1AqHJCETnLFF/j.6c7#f`<4Wu,6P99>/"lg2bsiCI't5moAY6kJ8BDm)heWr^
+,d>7`1s-[JG,9@H"OT2-7(Fig2h&2i'bHp5ViW.,60go'86PKf>J>?-bm;50+Z&hd^=9:d>&
+XdMSB.t$`/(.Ym\#!DolMha%S1uY.pTSm2n<H0&,^B`:;EB;NK^5jYV!m7m%En6'):?kK,rb
+h^5\?p(SWaLhX:m*'idu`3nPG-E7n%61hMeHOZ%I/s!sLs6\X_BB@8g2oJ85nW*F*%:jb'XD
+D?ij-*Y6,+tj*>otXKbRfI&@=aQPW1%.*oY*hOQ(3!)HU_!,\Oid\$AAt;pf7>NY*]Ag56784
+5b)gJnpVRgT[3;GPA97A(I^JfbXg!\Oda,NUXYIM?l^^G7$f[05s"(Ok/aCOX2Wsa0Y%lD,^
+T3f='K<*MGYZ!kjG$f_P`Ni+1(Zt2'7aL_h"Ia#rIu>m:/CFI3Gunmp0_I29m&ued!uU!/*X
+S]Aoj*:(<jZ@U51ZA\5LCO]Ak+cb+:349N^a/0))JXC^ot?n4[tr&[Zk@&IbPp:Orki[=I=JDI
+s8CPqr0@#Qr.S43^rH;%0nq-RYi`E]A%X"9gW7gPdhVfB=;$V=A_T)N0`r$1KcqeFh>Zq?4nH
+nRcmqjR0N"N9KJ"n_+qF9q*nV8@.>89i6$p4r]A&?[]AVr.c+F]A'MlAm($?[?b8K>,P$iRNnc%
+1P\%B(@%AR?n"*SZn;@Q7D>oM-2+\FS'B4+WG*\fg1GP;DA\(DRF7D\P,U/X4C([QX?<h/i3
+l4i'HJR;3ll9t%S?<;+D`Q8GMBq3d?CXToY+o15H238Tbq>na&);oXZ/&(4dDri6Mo2QKOa,
+=?HcN5kB7*:Vj^1Q2\+I0P+Sn3+S/He7m'I4QDNKq#S^&-0e+215"M?%qf3W+^*"Om1V.m,.
+MoFqJh+#b0)!)38#uK/':I9E$ec2BKOW%`>fl#/gQ4i]A@bT6Vo98/Ul`r%R<5[pI!Lpd@kVP
+8[,Ur@VIdK=q>eHriY\3pG$f23hI"<,H(oCI_Br0IW3doK:I$'sDKmX=;R4B-VXH*Lj#p)6&
+$(gPuQKu!p&;]A&bIYJK,uHOU/qfP<1N^g;Wu%"ep-VD,Nq@1%VplnoVb@'@E)!db@\(YENmJ
+73DJ_\<:k3)!b"J\;8?$g]A_f>[XbOhu\67*\\!TE1"N#!f&350!Nr8E.P\,K+%$'(gLIP_#o
+G."V+HJ>i7=7]A>-i\[!9L6Ha<KTL2E$Wn`lBIFgTP26lG+2Y8:L?B%+RK\*p#>INs9IDfbTc
+]ACoS~
 ]]></IM>
 <ElementCaseMobileAttrProvider horizontal="1" vertical="1" zoom="true" refresh="false" isUseHTML="false" isMobileCanvasSize="false" appearRefresh="false" allowFullScreen="false" allowDoubleClickOrZoom="true" functionalWhenUnactivated="false"/>
 <MobileFormCollapsedStyle class="com.fr.form.ui.mobile.MobileFormCollapsedStyle">
@@ -2208,7 +1881,7 @@ e46P/qfb9c"[>?hf8rc*o!qI]AY0:T^#&Pg<<Y%NffkTlg<1$3(5~
 <lineAttr number="1"/>
 </MobileFormCollapsedStyle>
 </InnerWidget>
-<BoundsAttr x="0" y="0" width="1020" height="552"/>
+<BoundsAttr x="0" y="0" width="1020" height="551"/>
 </Widget>
 <ShowBookmarks showBookmarks="false"/>
 <body class="com.fr.form.ui.ElementCaseEditor">
@@ -2721,61 +2394,7 @@ KD?3blh<<)?DYQ#[~
 </MobileFormCollapsedStyle>
 </body>
 </InnerWidget>
-<BoundsAttr x="0" y="40" width="1020" height="552"/>
-</Widget>
-<Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
-<InnerWidget class="com.fr.form.ui.container.WScaleLayout">
-<WidgetName name="para_shop"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
-<MobileBookMark useBookMark="false" bookMarkName="comboBox0" frozen="false"/>
-<PrivilegeControl/>
-</WidgetAttr>
-<Margin top="0" left="0" bottom="0" right="0"/>
-<Border>
-<border style="0" color="-723724" borderRadius="0" type="0" borderStyle="0"/>
-<WidgetTitle>
-<O>
-<![CDATA[新建标题]]></O>
-<FRFont name="SimSun" style="0" size="72"/>
-<Position pos="0"/>
-</WidgetTitle>
-<Alpha alpha="1.0"/>
-</Border>
-<LCAttr vgap="0" hgap="0" compInterval="0"/>
-<Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
-<InnerWidget class="com.fr.form.ui.ComboBox">
-<WidgetName name="para_shop"/>
-<WidgetID widgetID="8ea17f14-a0e1-43a8-ae39-8f6a3c84bcc3"/>
-<WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
-<MobileBookMark useBookMark="false" bookMarkName="" frozen="false"/>
-<PrivilegeControl/>
-<MobileStyle class="com.fr.form.ui.mobile.DefaultMobileStyle" isCustom="true" borderType="1" borderRadius="6.0" borderColor="-13395610" iconColor="-13395610">
-<Background name="ColorBackground"/>
-<FRFont name="SimSun" style="0" size="128"/>
-</MobileStyle>
-</WidgetAttr>
-<DirectEdit>
-<![CDATA[false]]></DirectEdit>
-<watermark>
-<![CDATA[门店选择]]></watermark>
-<CustomData>
-<![CDATA[false]]></CustomData>
-<Dictionary class="com.fr.data.impl.FormulaDictionary">
-<FormulaDict>
-<![CDATA[=if($para_viewtype==0,门店分区.SELECT(VIEWNO,INARRAY(SHOPGROUPNO,['QY01','QY02']A)>0),"")]]></FormulaDict>
-<EFormulaDict>
-<![CDATA[=if($para_viewtype==0,门店分区.select(VIEWNAME,VIEWNO=$$$ && INARRAY(SHOPGROUPNO,['QY01','QY02']A)>0),"")]]></EFormulaDict>
-</Dictionary>
-<widgetValue>
-<O>
-<![CDATA[]]></O>
-</widgetValue>
-</InnerWidget>
-<BoundsAttr x="0" y="20" width="1020" height="21"/>
-</Widget>
-<ShowBookmarks showBookmarks="false"/>
-</InnerWidget>
-<BoundsAttr x="0" y="20" width="1020" height="20"/>
+<BoundsAttr x="0" y="40" width="1020" height="551"/>
 </Widget>
 <Widget class="com.fr.form.ui.container.WAbsoluteLayout$BoundsWidget">
 <InnerWidget class="com.fr.form.ui.RadioGroup">
@@ -2793,20 +2412,7 @@ dom && dom.setVisible(!val);]]></Content>
 <WidgetAttr aspectRatioLocked="false" aspectRatioBackup="0.0" description="">
 <MobileBookMark useBookMark="false" bookMarkName="radioGroup0" frozen="false"/>
 <PrivilegeControl/>
-<MobileStyle class="com.fr.plugin.mobile.widget.radiogroup.united.UnitedMobileStyle" pluginID="com.fr.plugin.mobile.widget.radiogroup" plugin-version="10.4.986" isCustom="false" borderType="1" borderRadius="2.0" iconColor="-14701083">
-<ExtraAttr isCustom="true" leftPadding="0.0" rightPadding="0.0" topPadding="0.0" bottomPadding="0.0">
-<ExtraBackground initialBackgroundColor="-6891594" selectedBackgroundColor="-13395610"/>
-<ExtraBorder borderType="0" borderColor="-14701083" borderRadius="6.0"/>
-<InitialFont>
-<FRFont name="Arial" style="0" size="112" foreground="-1"/>
-</InitialFont>
-<SelectedFont>
-<FRFont name="Arial" style="0" size="112" foreground="-1"/>
-</SelectedFont>
-</ExtraAttr>
-<Background name="ColorBackground"/>
-<FRFont name="SimSun" style="0" size="128"/>
-</MobileStyle>
+<MobileStyle class="com.fr.form.ui.mobile.DefaultMobileStyle" isCustom="false" borderType="0" borderRadius="0.0"/>
 </WidgetAttr>
 <allowBlank>
 <![CDATA[false]]></allowBlank>
@@ -2835,17 +2441,17 @@ dom && dom.setVisible(!val);]]></Content>
 <MobileBookMarkStyle class="com.fr.form.ui.mobile.impl.DefaultMobileBookMarkStyle"/>
 <WidgetZoomAttr compState="0"/>
 <AppRelayout appRelayout="true"/>
-<Size width="1020" height="592"/>
+<Size width="1020" height="591"/>
 <ResolutionScalingAttr percent="1.2"/>
 <BodyLayoutType type="0"/>
 </Center>
 </Layout>
 <DesignerVersion DesignerVersion="KAA"/>
 <PreviewType PreviewType="0"/>
-<TemplateCloudInfoAttrMark class="com.fr.plugin.cloud.analytics.attr.TemplateInfoAttrMark" pluginID="com.fr.plugin.cloud.analytics.v10" plugin-version="2.3.0.20210831">
+<TemplateCloudInfoAttrMark class="com.fr.plugin.cloud.analytics.attr.TemplateInfoAttrMark" pluginID="com.fr.plugin.cloud.analytics.v10" plugin-version="2.4.1.20220120">
 <TemplateCloudInfoAttrMark createTime="1633678816517"/>
 </TemplateCloudInfoAttrMark>
 <TemplateIdAttMark class="com.fr.base.iofile.attr.TemplateIdAttrMark">
-<TemplateIdAttMark TemplateId="a7345375-9d31-4f6b-b707-46c66e42c9b5"/>
+<TemplateIdAttMark TemplateId="1e81fc40-edde-4330-b1b7-62f527985fa3"/>
 </TemplateIdAttMark>
 </Form>

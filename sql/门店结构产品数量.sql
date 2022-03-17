@@ -18,7 +18,7 @@ from
 		and a.organizationno not in ('A110')
 		--排除掉某些特定商品
 		and a.pluno not in ('010102092')
-		-- 宜春十运会店不要牛乳小馒头,刘松这里不改,我这里手动弄了下
+		/*-- 宜春十运会店不要牛乳小馒头,刘松这里不改,我这里手动弄了下
 		and not (a.pluno in ('010502036') and organizationno = 'A123')
 		-- 萍乡南正街店不要几款产品,刘松这里不改,我这里手动弄了下
 		and not (a.pluno in ('010103004','010103008','010103011','010103010') and organizationno = 'A116')
@@ -37,7 +37,7 @@ from
 		-- 萍乡润达店不要的几款产品
 		and not (a.pluno in ('010502028') and organizationno = 'A105')
 		-- 芦溪漫时区店不要的几款产品
-		and not (a.pluno in ('010102062','010102072','010502036') and organizationno = 'A117')
+		and not (a.pluno in ('010102062','010102072','010502036') and organizationno = 'A117')*/
 		and substr(b.sno,1,2) = '01'
 )
 where 1 = 1
